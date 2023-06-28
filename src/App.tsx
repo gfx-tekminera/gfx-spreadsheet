@@ -1,24 +1,21 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { Spreadsheet } from './lib/components/Spreadsheet';
+import './styles.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <div>Yes</div>
+      <Spreadsheet
+        sheetData={[
+          { name: 'lele', age: 1, },
+          { name: 'yeye', age: 2, },
+          { name: 'hehe', age: 3, },
+        ]}
+        sheetOption={{
+          includes: ['name', 'age'],
+        }}
+      />
     </div>
   );
 }

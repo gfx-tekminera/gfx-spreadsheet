@@ -1,46 +1,234 @@
-# Getting Started with Create React App
+# Gfx Spreadsheet Component
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React datagrid that is more focused on data.
+Made from extending [ReactGrid](https://reactgrid.com/) to render dynamic cell properties based on input properties.
 
-## Available Scripts
+## Usage
+```ts
+const View = () => {
+  const sheetRef = useRef(null);
+  const data = [
+    { name: 'lele', check: false, gender: 'male', },
+    { name: 'yeye', check: false, gender: 'female', },
+  ]
+  const option = {
+    includes: [ 'name', 'gender', ],
+    columnType: { gender: 'dropdown', },
+    valuesMap: { gender: ['male', 'female', ], },
+  }
 
-In the project directory, you can run:
+  const getSheetData = () => {
+    ref.current && ref.current.getData();
+  }
+  return (
+  <Spreadsheet
+    ref={sheetRef}
+    sheetData={data}
+    sheetOption={option}
+  />
+  )
+}
+```
 
-### `yarn start`
+## Properties
+Typings for props used by `Spreadsheet`
+```ts
+export type SpreadSheetProps = {
+  sheetData?: DataRow[];
+  sheetOption?: {
+    // cell type columnType[key] for DataRow[key]
+    columnType?: SpreadSheetColumnOption;
+    // list of enum values for DataRow[key]
+    valuesMap?: Record<keyof DataRow, any[]>;
+    // if provided, only show column included in list
+    includes?: (keyof DataRow)[];
+    // column size started from first non 'header' column
+    columnSize?: number[];
+    // additional column, each component will be rendered as button cell
+    rowActions?: Record<string, RowAction>,
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+    // custom option component for 'dropdown'
+    // map column key to custom option that will be rendered
+    customOption?: Record<keyof DataRow, React.FC<any>>;
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+    // custom value component for 'dropdown'
+    // map custom key to value component that will be rendered
+    customSingleValue?: Record<keyof DataRow, React.FC<any>>;
 
-### `yarn test`
+    // custom header label
+    headersLabel?: Record<keyof DataRow, string>;
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    // Intl format options
+    // for 'date' cell type
+    dateFormatOptions?: Intl.DateTimeFormatOptions;
+    // for 'time' cell type
+    timeFormatOptions?: Intl.DateTimeFormatOptions;
+    sheetLocale?: string;
 
-### `yarn build`
+    // map column name to be readOnly
+    readOnly?: Record<keyof DataRow, boolean>;
+    // dynamically set readonly column with callback
+    calculateMap?: Record<keyof DataRow, (row: DataRow) => DataRowValue>;
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+    // dynamically set validation function and error function
+    validateMap?: Record<keyof DataRow, CompositeCellValidation[]>;
+  };
+};
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- `sheetData`
+  `sheetData` are array of object. We use typings `DataRow[]`.  
+  `_idx` are reserved for row index and generated automatically on Spreadsheet render  
+  Each key, excluding `_idx`, in DataRow will be used as column name and are assumed uniform in each row.  
+  ```ts
+  type DataRow = {
+    [key: string]: string|boolean|number|Date|null
+  } & {_idx?: number};
+  ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- `sheetOption`
+  As default `sheetData` will be rendered as text cell with stringified value.
+  Controlling spreadsheet are mostly assigning properties related to key values in `DataRow`
+  - `columnType`, mapping column name to cell types
+    Cell types from ReactGrid: `'header', 'text', 'number', 'date', 'time', 'checkbox', 'dropdown'`  
+    Extended cell types: `'s_header', 's_creatable'`  
+    - 's_header', kinda "read-only" cell, edit mode enabled with extra steps
+    - 's_creatable', based on 'dropdown', using [ReactSelect Creatable](https://react-select.com/creatable) to provide adding new option.
+      For this column type, new value added in one cell will be provided on others.
+    ```ts
+    const columnType = {
+      // columnName: 'columnType',
+      name: 'text',
+      age: 'number',
+      gender: 'dropdown',
+    };
+    ```
 
-### `yarn eject`
+  - `valuesMap`, list of options value for cell type `dropdown` and `s_creatable`.
+    ```ts
+    const columnType = {
+      gender: ['male', 'female', 'apache helicopter', ],
+    };
+    ```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+  - `includes`, list of rendered column, use case for changing certain column value
+    ```ts
+    const includes = ['name', 'gender', ];
+    ```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+  - `columnSize`, assigning column width started from first non header column.
+    Length of `columnSize` doesn't have to match with rendered column counts.
+    ```ts
+    const columnSize = [300, 70];
+    ```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+  - `rowActions`, mapping of action that will be executed exclusively on row
+    ```tsx
+    export type ButtonComponentProps = {
+      text: string;
+      onClick: (e: React.MouseEvent) => any;
+    }
+    type ButtonAction = (e: React.MouseEvent, row: DataRow) => any;
+    type RowAction = {
+      text: string;
+      action?: ButtonAction;
+      component?: React.FC<ButtonComponentProps>;
+    }
+    ```
+    currently, ButtonAction are non-mutating method. example for this use case are navigation button, where delete row or other method that change spreadsheet state are not developed yet.
+    Example
+    ```tsx
+    <Spreadsheet
+      ref={ref}
+      sheetData={data}
+      sheetOption={{
+        rowActions: {
+          goto: {
+            text: 'Goto',
+            action: (e, row) => gotoPage(row.id),
+          },
+        }
+      }}
+    />
+    ```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+  - `headersLabel`, mapping of custom column header label
+    ```ts
+    const headersLabel = {
+      gender: 'Person Gender',
+    }
+    ```
 
-## Learn More
+  - `readOnly`, mapping of read-only column
+    ```ts
+    const readOnly = {
+      gender: true,
+    }
+    ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+  - for `date` and `time` cell type in the spreadsheet, general formating using `Intl`
+    pass `dateFormatOptions`, `timeFormatOptions`, and `sheetLocale` to `sheetOption`
+    ```ts
+    const dateFormatOptions = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    };
+    const timeFormatOptions = {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      };
+    const sheetLocale = 'en-ID';
+    ```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+  - `calculateMap`, where column are set as read-only,
+    callback function can be set to dynamically set cell value
+    ```ts
+    const calculateMap = {
+      distance: (row) => {
+        return Number(row.endPoint) - Number(row.startPoint);
+      },
+    }
+    ```
+
+  - `validateMap`, mapping of each column to validation functions
+    validations functions are list of object.
+    each object has callback where `message` are sent back `fn` returns `true`
+    ```ts
+    const validateMap = {
+      distance: [
+        {
+          fn: (location, data) => data[Number(location.rowId)][location.columnId] === undefined,
+          message: 'Cannot be null',
+        },
+      ]
+    }
+    ```
+
+
+## Accessing spreadsheet state
+If reference is provided, spreadsheet state can be accessed with these exposed methods.
+- `ref.current.getData()`
+  returns current spreadsheet values in cell types.
+- `ref.current.getSheetOption()`
+  returns current spreadsheet options `sheetOption`.
+- `ref.current.getColumns()`
+  returns list of spreadsheet column properties
+- `ref.current.getHeaderMap()`
+  returns list of current spreadsheet header labels
+- `ref.current.getRows()`
+  returns rendered spreadsheet entity (?)
+- `ref.current.getValuesMap()`
+  returns `sheetOption.valuesMap` shorter of `getSheetOption().valuesMap`.
+- `ref.current.getColumnSize()`
+  returns `sheetOption.columnSize` shorter of `getSheetOption().columnSize`.
+
+
+## Dependencies
+```json
+  "react": "18.2.0",
+  "react-select": "5.7.0",
+  "@silevis/reactgrid": "4.0.4",
+```
