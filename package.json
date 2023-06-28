@@ -6,6 +6,7 @@
   "module": "core/gfxComponents.esm.js",
   "types": "gfxComponents.d.ts",
   "author": "TNT Team",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/gfx-geoprosp/gfx-spreadsheet.git"
