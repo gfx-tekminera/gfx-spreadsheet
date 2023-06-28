@@ -394,6 +394,28 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     },
   }), [columns, data, dataColumnHeaderMap, columnValuesMap, validationReport]);
 
+  const getSpreadsheetColumnValuesMap = (
+    dataKey: string,
+    row: DataRow,
+    options: SpreadSheetProps['sheetOption'] = {},
+  ): OptionItem[] => {
+    if (!columnValuesMap[dataKey]) {
+      return []
+    }
+    let labelMap: ((val: string) => string) | undefined = undefined;
+    if (options?.labelsMap !== undefined && dataKey in options.labelsMap) {
+      labelMap = options.labelsMap[dataKey];
+    }
+    let values = Array.from(columnValuesMap[dataKey]);
+    if (options?.valuesFilter && dataKey in options.valuesFilter) {
+      const filter_ = options.valuesFilter[dataKey];
+      values = values.filter(item => {
+        return filter_(item, row);
+      });
+    }
+    return values.map(val => createOption(val, labelMap));
+  }
+
   // TODO: handle copy/paste value are taken from cell.text
   const createCellProps = (
     type: SpreadSheetCellTypes['type'],
@@ -419,14 +441,10 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
 
     switch(type) {
       case 's_creatable': {
-        let labelMap: SpreadSheetOption['labelsMap'][string] | undefined = undefined;
-        if (options?.labelsMap !== undefined && dataKey in options.labelsMap) {
-          labelMap = options.labelsMap[dataKey];
-        }
         return {
           type,
           // inputValue: row[dataKey].toString(),
-          options: Array.from(columnValuesMap[dataKey]).map(val => createOption(val, labelMap)),
+          options: getSpreadsheetColumnValuesMap(dataKey, row, options),
           selectedValue: cellValue?.toString(),
           isOpen: getCellStateValue(state[dataKey], 'isOpen') || false,
           // text: row[dataKey]?.toString() || '',
@@ -453,7 +471,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           type,
           inputValue: createOption(row[dataKey]?.toString() || '', labelMap).label,
           selectedValue: cellValue?.toString(),
-          values: Array.from(columnValuesMap[dataKey]).map(val => createOption(val, labelMap)),
+          values: getSpreadsheetColumnValuesMap(dataKey, row, options),
           isOpen: getCellStateValue(state[dataKey], 'isOpen') || false,
           text: row[dataKey]?.toString() || '',
           componentOption: customOption,

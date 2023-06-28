@@ -45,6 +45,9 @@ export type CompositeCellValidation = {
   fn: CellValidation;
   message: string;
 }
+// ValuesFilter, callback for valuesMap[string] when row value are changed
+// called as Array.from(valuesMap[string]).filter(item => cb(item, DataRow));
+export type ValuesFilter = (optionItem: DataRowValue, row: DataRow) => boolean;
 export type SpreadSheetOption = {
   // cell type columnType[key] for DataRow[key]
   columnType: SpreadSheetColumnOption;
@@ -77,6 +80,9 @@ export type SpreadSheetOption = {
   // location is cell location currently being validated
   // if false, return `message`
   validateMap: Record<keyof DataRow, CompositeCellValidation[]>;
+  // map column to function (optionItem, row) => callback
+  // function will be used as callback in Array(valuesMap[dataKey]).filter(callback)
+  valuesFilter?: Record<keyof DataRow, ValuesFilter>;
 }
 export type SpreadSheetProps = {
   sheetData?: DataRow[];
