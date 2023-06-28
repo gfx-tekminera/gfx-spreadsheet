@@ -72,6 +72,10 @@ export type SpreadSheetProps = {
 
     // dynamically set validation function and error function
     validateMap?: Record<keyof DataRow, CompositeCellValidation[]>;
+
+    // map column to function (optionItem, row) => callback
+    // function will be used as callback in Array(valuesMap[dataKey]).filter(callback)
+    valuesFilter?: Record<keyof DataRow, ValuesFilter>;
   };
 };
 ```
@@ -204,6 +208,44 @@ export type SpreadSheetProps = {
           message: 'Cannot be null',
         },
       ]
+    }
+    ```
+
+  - `valuesFilter`, mapping column to function with `optionItem` and `row` as parameters returning boolean value
+    `optionItem` are item of `valuesMap[columnId]`
+    each function can be used as callback to filter valuesMap based on current row value
+    implemented as example `Array.from(valuesMap[columnId]).filter(valuesFilter[columnId])`
+    ```ts
+    const titleReference = {
+      "mr": {
+        gender: 'male',
+      },
+      "sir": {
+        gender: 'male',
+      },
+      "mrs": {
+        gender: 'female',
+      },
+      "ms": {
+        gender: 'female',
+      },
+      "madam": {
+        gender: 'female',
+      },
+    };
+
+    const valuesMap = {
+      gender: ['male', 'female', 'apache helicopter', ],
+      title: Object.keys(titleReference),
+    };
+
+    const valuesFilter = {
+      title: (optionItem, row) => {
+        if (!row[gender]) {
+          return true;
+        }
+        return titleReference[optionItem].gender === row['gender'];
+      },
     }
     ```
 
