@@ -1,14 +1,22 @@
 import {
   CellLocation,
   Row,
+  Column,
   TextCell,
   NumberCell,
   CheckboxCell,
   DateCell,
   TimeCell,
   DefaultCellTypes,
+  CellStyle,
 } from '@silevis/reactgrid';
-import { ButtonCell, ButtonComponentProps, ModifiedDropdownCell, TextCreatableCell, SpreadsheetHeaderCell } from './templates';
+import {
+  ButtonCell,
+  ButtonComponentProps,
+  ModifiedDropdownCell,
+  TextCreatableCell,
+  SpreadsheetHeaderCell,
+} from './templates';
 
 export type SpreadSheetCellTypes = TextCreatableCell |
   SpreadsheetHeaderCell |
@@ -48,6 +56,16 @@ export type CompositeCellValidation = {
 // ValuesFilter, callback for valuesMap[string] when row value are changed
 // called as Array.from(valuesMap[string]).filter(item => cb(item, DataRow));
 export type ValuesFilter = (optionItem: DataRowValue, row: DataRow) => boolean;
+
+export type StyleStateNote = {
+  [type: string]: 'rowstyle' | 'columnstyle' | 'cellstyle'
+};
+export type RowStyle = Record<Row['rowId'], CellStyle>;
+export type ColumnStyle = Record<Column['columnId'], CellStyle>;
+export type SpreadsheetCellStyle = Record<Row['rowId'], ColumnStyle>;
+export type CellStyleMap = Partial<RowStyle | ColumnStyle | SpreadsheetCellStyle>;
+export type StyleState = StyleStateNote | CellStyleMap;
+
 export type SpreadSheetOption = {
   // cell type columnType[key] for DataRow[key]
   columnType: SpreadSheetColumnOption;
@@ -83,6 +101,18 @@ export type SpreadSheetOption = {
   // map column to function (optionItem, row) => callback
   // function will be used as callback in Array(valuesMap[dataKey]).filter(callback)
   valuesFilter?: Record<keyof DataRow, ValuesFilter>;
+  // in proposal, init spreadsheet style with array of pair range-CellStyle
+  // defining style in range of columns and rows
+  // "<rowIdA>-<rowIdB>:<colIdA>-<colIdB>" --> ["1-3:name-age", {...}]
+  // style in range of columns of single row
+  // "<rowId>:<colIdA>-<colIdB>" --> ["1:name-age", {...}]
+  // style in range of rows of single column
+  // "<rowIdA>-<rowIdB>:<colId>" --> ["1-3:name", {...}]
+  // style single row indefinitely
+  // "<rowId>:" --> ["1:", {...}]
+  // style single column indefinitely
+  // ":<colId>" --> [":name", {...}]
+  initialSheetStyle: [string, CellStyle][];
 }
 export type SpreadSheetProps = {
   sheetData?: DataRow[];

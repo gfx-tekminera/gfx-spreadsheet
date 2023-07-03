@@ -17,7 +17,9 @@ import {
   ColumnValuesMap,
   CellState, CompositeCellValidation,
   OptionItem, ValidationReport,
+  StyleState, SpreadsheetCellStyle, StyleStateNote,
 } from './Spreadsheet.types';
+import { isRangePattern, isColonPattern } from '../../helpers';
 
 const reorderArray = <T extends object>(arr: T[], idxs: number[], to: number) => {
   const movedElements = arr.filter((_, idx) => idxs.includes(idx));
@@ -100,6 +102,59 @@ const _newBoolean = (val: DataRowValue|undefined): boolean => {
     }
   }
   return Boolean(val);
+}
+
+const rangeDelimiter = '-';
+const createRowStyle = (range: string, cellStyle: CellStyle) => {
+  if (isRangePattern(range)) {
+    const [start, end] = range.split(rangeDelimiter).map(item => Number(item));
+    const result: Record<number, CellStyle> = {};
+    if (start > end) {
+      for (let i = end; i <= start; i++) {
+        result[i] = cellStyle;
+      }
+      return result;
+    }
+    for (let i = start; i <= end; i++) {
+      result[i] = cellStyle;
+    }
+    return result;
+  } else {
+    return { [range]: cellStyle };
+  }
+}
+const createColumnStyle = (range: string, cellStyle: CellStyle) => {
+  if (isRangePattern(range)) {
+    const result: Record<string, CellStyle> = {};
+    range.split(rangeDelimiter).forEach(col => {
+      result[col] = cellStyle;
+    });
+    return result;
+  } else {
+    return { [range]: cellStyle };
+  }
+}
+const createSpreadsheetStyle = (
+  rowRange: string,
+  colRange: string,
+  cellStyle: CellStyle
+) => {
+  if (isRangePattern(rowRange)) {
+    const [start, end] = rowRange.split(rangeDelimiter).map(item => Number(item));
+    const result: Record<number, Record<string, CellStyle>> = {};
+    if (start > end) {
+      for (let i = end; i <= start; i++) {
+        result[i] = createColumnStyle(colRange, cellStyle);
+      }
+      return result;
+    }
+    for (let i = start; i <= end; i++) {
+      result[i] = createColumnStyle(colRange, cellStyle);
+    }
+    return result;
+  } else {
+    return { [rowRange]: createColumnStyle(colRange, cellStyle) }
+  }
 }
 
 const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
@@ -295,6 +350,57 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     return result;
   }
 
+  // parse initial spreadsheet style
+  // style in range of columns and rows
+  // "<rowIdA>-<rowIdB>:<colIdA>-<colIdB>" --> 1-3:name-age
+  // style in range of columns of single row
+  // "<rowId>:<colIdA>-<colIdB>" --> 1:name-age
+  // style in range of rows of single column
+  // "<rowIdA>-<rowIdB>:<colId>" --> 1-3:name
+  // style single row indefinitely
+  // "<rowId>:" --> 1:
+  // style single column indefinitely
+  // ":<colId>" --> :name
+  // TODO: currently will leave colRange "colNameA-colNameZ" to apply style to
+  // only colNameA and colNameZ instead of "colNameA through colNameZ"
+  const createStyleState = (): StyleState => {
+    const initialStyles = props?.sheetOption?.initialSheetStyle || [];
+    let styleType: StyleStateNote['type'];
+    const state_: StyleState = { type: 'columnstyle' };
+
+    initialStyles.forEach(item => {
+      if (item && item?.at(0) && isColonPattern(item[0])) {
+        const strRange: string = item[0];
+        const [rowRange, colRange] = strRange.split(':');
+        if (styleType === undefined) {
+          if (rowRange === '') {
+            styleType = 'columnstyle';
+          } else if (colRange === '') {
+            styleType = 'rowstyle';
+          } else {
+            styleType = 'cellstyle';
+          }
+
+          state_['type'] = styleType;
+        }
+
+        if (rowRange && colRange) {
+          // assign SpreadsheetCellStyle
+          Object.assign(
+            state_, createSpreadsheetStyle(rowRange, colRange, item[1])
+          );
+        } else if (rowRange) {
+          // assign rowstyle
+          Object.assign(state_, createRowStyle(rowRange, item[1]));
+        } else if (colRange) {
+          // assign colstyle
+          Object.assign(state_, createColumnStyle(colRange, item[1]));
+        }
+      }
+    });
+    return state_;
+  }
+
   const [columns, setColumns] = useState<Column[]>(getColumns());
   const [actionColumns] = useState<Column[]>(getActionColumns())
   const [columnValuesMap, setColumnValuesMap] = useState<ColumnValuesMap>(getColumnValuesMap());
@@ -304,6 +410,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   const [validationReport, setValidationReport] = useState<ValidationReport>(
     getCellValidations(data, props?.sheetOption)
   );
+  const [styleState, setStyleState] = useState<StyleState>(() => createStyleState());
 
   useEffect(() => {
     const data_ = getData(props?.sheetData, props?.sheetOption);
@@ -317,13 +424,37 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     setValidationReport(
       getCellValidations(data_, props?.sheetOption)
     );
+    setStyleState(() => createStyleState());
   }, [props]);
 
   const getCellStyle = (
     rowId: Row['rowId'],
     columnId: Column['columnId'],
   ): CellStyle => {
-    const cellStyle: Record<string, any> = {};
+    let cellStyle: Record<string, any> = {};
+
+    switch (styleState.type) {
+      case 'rowstyle':
+        if (rowId in styleState) {
+          cellStyle = styleState[rowId] as typeof cellStyle;
+        }
+        break;
+      case 'columnstyle':
+        if (columnId in styleState) {
+          cellStyle = styleState[columnId] as typeof cellStyle;
+        }
+        break;
+      case 'cellstyle':
+        if (
+          rowId in styleState &&
+            styleState[rowId] !== undefined &&
+            columnId in (styleState[rowId] as SpreadsheetCellStyle)
+        ) {
+          cellStyle = (styleState[rowId] as SpreadsheetCellStyle)[columnId]
+        }
+        break;
+    }
+
     let cellValidation: string[] = [];
     try {
       cellValidation = validationReport[rowId][columnId] || [];
@@ -392,7 +523,8 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       setValidationReport(reports);
       return reports;
     },
-  }), [columns, data, dataColumnHeaderMap, columnValuesMap, validationReport]);
+    getStyleState: () => styleState,
+  }), [columns, data, dataColumnHeaderMap, columnValuesMap, validationReport, styleState]);
 
   const getSpreadsheetColumnValuesMap = (
     dataKey: string,

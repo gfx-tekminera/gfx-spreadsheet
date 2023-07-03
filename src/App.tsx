@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Spreadsheet } from './lib/components/Spreadsheet';
 import './styles.css';
 
 function App() {
+  const ref = useRef<any>();
   const [ titleRef ] = useState<Record<string, string[]>>({
     'm': ['mr', 'sir',],
     'f': ['ms', 'mrs', 'ma\'am',],
@@ -10,6 +11,7 @@ function App() {
   return (
     <div>
       <Spreadsheet
+        ref={ref}
         sheetData={[
           { name: 'lele', age: 1, gender: 'm', title: '', },
           { name: 'yeye', age: 2, gender: 'f', title: '', },
@@ -30,12 +32,29 @@ function App() {
               if (!row['gender']) {
                 return true;
               }
-              console.log(row);
               return titleRef[row['gender'].toString()].includes(option.toString());
             },
           },
+          initialSheetStyle: [
+            [':gender-title', {
+              color: 'red',
+              background: 'green',
+              paddingLeft: '0',
+              // overflow: 'scroll', // will mess with 's_creatable' and 'dropdown' behavior
+              // border: { left: { color: 'blue', width: '25px', }, top: { color: 'blue', width: '25px', }, bottom: { color: 'blue', width: '25px', }, right: { color: 'blue', width: '25px', }, }, // cellstyle border are broken since v4.0.4
+            }],
+          ],
         }}
       />
+      <div>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              console.log(ref.current.getStyleState(), 'getstylestate')
+          }}
+        >StyleState</button>
+      </div>
     </div>
   );
 }
