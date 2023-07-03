@@ -249,6 +249,50 @@ export type SpreadSheetProps = {
     }
     ```
 
+  - `initialSheetStyle`, simplified mapping [CellStyle](https://reactgrid.com/docs/4.0/7-api/0-interfaces/7-cell-style/) to each cell.
+    Each mapping consisted of pair cell ranges & cell style object in array `[string, CellStyle]`
+    ```
+    "<rowIdA>-<rowIdB>:<colIdA>-<colIdB>" --> 1-3:name-age
+    style in range of columns of single row
+    "<rowId>:<colIdA>-<colIdB>" --> 1:name-age
+    style in range of rows of single column
+    "<rowIdA>-<rowIdB>:<colId>" --> 1-3:name
+    style single row indefinitely
+    "<rowId>:" --> 1:
+    style single column indefinitely
+    ":<colId>" --> :name
+    ```
+
+    Example:
+    ```ts
+    const initialSheetStyle: [
+      // NOT IMPLEMENTED: applying style in particular cell range
+      ['1-3:age-title', {
+        color: 'red',
+        background: 'green',
+        paddingLeft: '0',
+        overflow: 'scroll',
+        // border: { left: { color: 'blue', width: '25px', }, top: { color: 'blue', width: '25px', }, bottom: { color: 'blue', width: '25px', }, right: { color: 'blue', width: '25px', }, }, // cellstyle border are broken since v4.0.4
+      }],
+      // NOT IMPLEMENTED: row style
+      ['1:', {
+        color: 'red',
+        background: 'green',
+        paddingLeft: '0',
+        overflow: 'scroll',
+        // border: { left: { color: 'blue', width: '25px', }, top: { color: 'blue', width: '25px', }, bottom: { color: 'blue', width: '25px', }, right: { color: 'blue', width: '25px', }, }, // cellstyle border are broken since v4.0.4
+      }],
+      // column style
+      [':age', {
+        color: 'red',
+        background: 'green',
+        paddingLeft: '0',
+        overflow: 'scroll',
+        // border: { left: { color: 'blue', width: '25px', }, top: { color: 'blue', width: '25px', }, bottom: { color: 'blue', width: '25px', }, right: { color: 'blue', width: '25px', }, }, // cellstyle border are broken since v4.0.4
+      }],
+    ];
+    ```
+
 
 ## Accessing spreadsheet state
 If reference is provided, spreadsheet state can be accessed with these exposed methods.
@@ -266,6 +310,8 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   returns `sheetOption.valuesMap` shorter of `getSheetOption().valuesMap`.
 - `ref.current.getColumnSize()`
   returns `sheetOption.columnSize` shorter of `getSheetOption().columnSize`.
+- `ref.current.getStyleState()`
+  returns CellStyle mapping for each cell
 
 
 ## Dependencies
