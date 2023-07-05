@@ -210,6 +210,8 @@ export type SpreadSheetProps = {
       ]
     }
     ```
+  - `validationCellStyle`, set [CellStyle](https://reactgrid.com/docs/4.0/7-api/0-interfaces/7-cell-style/) for cells where validation function returns true.
+    Default value set to `{ backgroundColor: 'red' }`.
 
   - `valuesFilter`, mapping column to function with `optionItem` and `row` as parameters returning boolean value
     `optionItem` are item of `valuesMap[columnId]`
@@ -292,6 +294,8 @@ export type SpreadSheetProps = {
       }],
     ];
     ```
+
+  - `headerStyle`, setting [CellStyle](https://reactgrid.com/docs/4.0/7-api/0-interfaces/7-cell-style/) for header cells.
 
 
 ## Accessing spreadsheet state
