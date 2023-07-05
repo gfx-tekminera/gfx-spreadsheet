@@ -56,6 +56,15 @@ function App() {
             color: 'violet',
             background: 'grey',
           },
+          validateMap: {
+            age: [
+              { fn: () => true, message: 'test', },
+            ],
+          },
+          validationCellStyle: {
+            color: 'orange',
+            background: 'black',
+          },
         }}
       />
       <div>

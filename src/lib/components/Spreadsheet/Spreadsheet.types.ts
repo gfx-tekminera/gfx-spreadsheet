@@ -114,7 +114,10 @@ export type SpreadSheetOption = {
   // style single column indefinitely
   // ":<colId>" --> [":name", {...}]
   initialSheetStyle: [string, CellStyle][];
+  // cell style for header cell
   headerStyle: CellStyle;
+  // cell style for validated cell
+  validationCellStyle: CellStyle;
 }
 export type SpreadSheetProps = {
   sheetData?: DataRow[];

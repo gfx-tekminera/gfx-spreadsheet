@@ -427,6 +427,9 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     setStyleState(() => createStyleState());
   }, [props]);
 
+  const getValidationStyle = () => {
+    return props?.sheetOption?.validationCellStyle || {};
+  }
   const getCellStyle = (
     rowId: Row['rowId'],
     columnId: Column['columnId'],
@@ -464,8 +467,10 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
 
     // apply style if validation failed
     // TODO: expose validation styling option
+    // key => columnId + message
     if (cellValidation.length > 0) {
       cellStyle.background = 'rgba(240, 23, 23, 0.69)';
+      Object.assign(cellStyle, getValidationStyle());
     }
     return cellStyle;
   }
@@ -1085,7 +1090,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           dropdown: new ModifiedDropdownCellTemplate(),
           button: new ButtonCellTemplate(),
         }}
-        // TODO: set focusLocation from focusState
+        // set focusLocation from focusState
         focusLocation={focusState}
         // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
