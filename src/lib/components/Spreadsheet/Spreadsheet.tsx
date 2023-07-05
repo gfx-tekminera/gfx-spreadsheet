@@ -463,6 +463,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     }
 
     // apply style if validation failed
+    // TODO: expose validation styling option
     if (cellValidation.length > 0) {
       cellStyle.background = 'rgba(240, 23, 23, 0.69)';
     }
@@ -524,6 +525,8 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       return reports;
     },
     getStyleState: () => styleState,
+    // TODO: expose setFocusState
+    // setFocusState: (newState: CellLocation|undefined) => { setFocusState(newState); },
   }), [columns, data, dataColumnHeaderMap, columnValuesMap, validationReport, styleState]);
 
   const getSpreadsheetColumnValuesMap = (
@@ -688,6 +691,10 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     }
   }
 
+  const getHeaderStyle = (): CellStyle => {
+    return props?.sheetOption?.headerStyle || {};
+  }
+
   const getRows = (
     dataRow: DataRow[],
     columnsOrder: DataColumnId[],
@@ -712,10 +719,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     const headersRow = (_col: Column[], headerMap: DataColumnHeaderMap): SpreadsheetHeaderCell[] => {
       return [
         ..._col.map((_, _idx) => ({
-        type: 's_header',
-        dataKey: columnsOrder[_idx].toString(),
-        text: headerMap[columnsOrder[_idx]] ?
-          headerMap[columnsOrder[_idx]].toString() : columnsOrder[_idx].toString(),
+          type: 's_header',
+          dataKey: columnsOrder[_idx].toString(),
+          text: headerMap[columnsOrder[_idx]] ?
+            headerMap[columnsOrder[_idx]].toString() : columnsOrder[_idx].toString(),
+          style: getHeaderStyle(), // headerStyle
         })),
         ...actionColumns.map((col) => ({
           type: 's_header',
@@ -734,7 +742,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         reorderable: true,
         // height: 80,
         cells: [
-          { type: 'header', text: rowIdx.toString(), },
+          {
+            type: 'header',
+            text: rowIdx.toString(),
+            style: getHeaderStyle(), // headerStyle
+          },
           ...itemRows(row, cellStates[rowIdx] || createCellState(row)),
           // add action cell here?
           ...Object.values(getRowActions()).map((item) => rowActionToButtonCell(item, row)),
@@ -1070,6 +1082,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           dropdown: new ModifiedDropdownCellTemplate(),
           button: new ButtonCellTemplate(),
         }}
+        // TODO: set focusLocation from focusState
         initialFocusLocation={{
           columnId: columns[1] ? columns[1].columnId : columns[0].columnId,
           rowId: rows[1] ? rows[1].rowId : rows[0].rowId,

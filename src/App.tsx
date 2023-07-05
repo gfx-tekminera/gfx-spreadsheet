@@ -52,6 +52,10 @@ function App() {
               // border: { left: { color: 'blue', width: '25px', }, top: { color: 'blue', width: '25px', }, bottom: { color: 'blue', width: '25px', }, right: { color: 'blue', width: '25px', }, }, // cellstyle border are broken since v4.0.4
             }],
           ],
+          headerStyle: {
+            color: 'violet',
+            background: 'grey',
+          },
         }}
       />
       <div>

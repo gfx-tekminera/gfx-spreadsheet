@@ -93,6 +93,7 @@ export type SpreadSheetOption = {
   // map column name to be readOnly
   readOnly: Record<keyof DataRow, boolean>;
   // dynamically set readonly column with callback
+  // TODO: callback using DataRow[] and CellLocation instead of DataRow
   calculateMap: Record<keyof DataRow, (row: DataRow) => DataRowValue>;
   // dynamicaly use callback `fn` to do validation, returning boolean
   // location is cell location currently being validated
@@ -113,6 +114,7 @@ export type SpreadSheetOption = {
   // style single column indefinitely
   // ":<colId>" --> [":name", {...}]
   initialSheetStyle: [string, CellStyle][];
+  headerStyle: CellStyle;
 }
 export type SpreadSheetProps = {
   sheetData?: DataRow[];
