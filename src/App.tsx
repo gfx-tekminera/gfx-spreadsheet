@@ -63,9 +63,16 @@ function App() {
           onClick={() => {
             ref &&
               ref.current &&
-              console.log(ref.current.getStyleState(), 'getstylestate')
+              console.log(ref.current.getStyleState(), 'getstylestate');
           }}
         >StyleState</button>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              ref.current.setFocusState(undefined);
+          }}
+        >Remove Focus</button>
       </div>
     </div>
   );

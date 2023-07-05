@@ -525,9 +525,12 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       return reports;
     },
     getStyleState: () => styleState,
-    // TODO: expose setFocusState
-    // setFocusState: (newState: CellLocation|undefined) => { setFocusState(newState); },
-  }), [columns, data, dataColumnHeaderMap, columnValuesMap, validationReport, styleState]);
+    // expose setFocusState
+    setFocusState: (newState: CellLocation|undefined) => {
+      // console.log('setfocusstate', newState);
+      setFocusState(newState);
+    },
+  }), [columns, data, dataColumnHeaderMap, columnValuesMap, validationReport, styleState, focusState]);
 
   const getSpreadsheetColumnValuesMap = (
     dataKey: string,
@@ -1083,10 +1086,8 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           button: new ButtonCellTemplate(),
         }}
         // TODO: set focusLocation from focusState
-        initialFocusLocation={{
-          columnId: columns[1] ? columns[1].columnId : columns[0].columnId,
-          rowId: rows[1] ? rows[1].rowId : rows[0].rowId,
-        }}
+        focusLocation={focusState}
+        // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
       />
     </div>
