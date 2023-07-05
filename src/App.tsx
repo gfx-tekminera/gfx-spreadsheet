@@ -11,6 +11,13 @@ function App() {
   return (
     <div>
       <Spreadsheet
+        className={'spreadsheet-style'}
+        style={{
+          fontFamily: 'monospace',
+          fontWeight: 'bolder',
+          // color: 'chocolate',
+          backgroundColor: 'beige',
+        }}
         ref={ref}
         sheetData={[
           { name: 'lele', age: 1, gender: 'm', title: '', },
@@ -20,6 +27,7 @@ function App() {
         sheetOption={{
           includes: ['name', 'age', 'gender', 'title',],
           columnType: {
+            age: 'number',
             gender: 'dropdown',
             title: 'dropdown',
           },
@@ -37,7 +45,7 @@ function App() {
           },
           initialSheetStyle: [
             [':gender-title', {
-              color: 'red',
+              color: 'orange',
               background: 'green',
               paddingLeft: '0',
               // overflow: 'scroll', // will mess with 's_creatable' and 'dropdown' behavior

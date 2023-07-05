@@ -1050,6 +1050,8 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // console.log(cellStates, 'cellstate');
       }}
       data-testid={"spreadsheet"}
+      style={props?.style && {...props.style}}
+      className={props?.className ? props.className : ''}
     >
       <ReactGrid
         rows={rows} columns={[...columns, ...actionColumns]}

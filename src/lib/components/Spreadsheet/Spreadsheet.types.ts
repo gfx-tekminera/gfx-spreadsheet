@@ -117,6 +117,8 @@ export type SpreadSheetOption = {
 export type SpreadSheetProps = {
   sheetData?: DataRow[];
   sheetOption?: Partial<SpreadSheetOption>;
+  style?: React.CSSProperties;
+  className?: string;
 };
 
 export type DataColumnMap = {
