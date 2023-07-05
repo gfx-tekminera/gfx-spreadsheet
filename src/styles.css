@@ -8,6 +8,9 @@
   background: transparent;
   font-size: 1em;
   font-family: inherit;
+  font-weight: inherit;
+  color: inherit;
+  font-style: inherit;
   outline: none; }
 
 .rg-celleditor {
