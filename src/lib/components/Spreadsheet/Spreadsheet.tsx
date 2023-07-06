@@ -206,7 +206,13 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         ),
         Object.fromEntries(Object.entries(row).map(([key, val]) => {
           if (calculateMap[key]) {
-            return [key, calculateMap[key](row)]
+            return [
+              key, calculateMap[key](
+                row,
+                sheetData,
+                {rowId: idx, columnId: key}
+              )
+            ]
           }
           return [key, val];
         })),
@@ -490,7 +496,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           return [key, val]
         }
         if (key in calculateMap && val === '') {
-          return [key, calculateMap[key](row).toString()]
+          return [key, calculateMap[key](
+            row,
+            data,
+            {rowId: row._idx as Id, columnId: key},
+          ).toString()];
         }
         return [key, val?.toString() || '']
       },
@@ -565,6 +575,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     row: DataRow,
     state: CellState,
     dataKey: string,
+    dataRow: DataRow[],
     options: SpreadSheetProps['sheetOption'] = {},
   ): SpreadSheetCellTypes => {
     let nonEditable: SpreadSheetOption['readOnly'][string] = false;
@@ -579,7 +590,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     // cell value: taking value from sheetData or calculated
     let cellValue: DataRowValue | undefined = row[dataKey];
     if (nonEditable && calculateMap !== undefined) {
-      cellValue = calculateMap(row) || '';
+      cellValue = calculateMap(
+        row,
+        dataRow,
+        {rowId: row._idx as Id, columnId: dataKey},
+      ) || '';
     }
 
     switch(type) {
@@ -719,6 +734,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             _row,
             cellState,
             val.toString(),
+            dataRow,
             props?.sheetOption || {},
           )
         }
@@ -805,7 +821,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       prevData[rowIndex][fieldName] = getCellData(cell);
       Object.keys(calculateMap).forEach(key => {
         if (key in prevData[rowIndex]) {
-          prevData[rowIndex][key] = calculateMap[key](prevData[rowIndex]);
+          prevData[rowIndex][key] = calculateMap[key](
+            prevData[rowIndex],
+            prevData,
+            {rowId: change.rowId, columnId: change.columnId},
+          );
         }
       });
       // should validation done per changes or once for the whole sheet?
@@ -1021,7 +1041,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             });
             Object.keys(calculateMap).forEach(key => {
               if (key in calculateMap) {
-                empty[key] = calculateMap[key](empty).toString();
+                empty[key] = calculateMap[key](
+                  empty,
+                  data,
+                  {rowId: empty._idx as Id, columnId: key},
+                ).toString();
               }
             });
             const newState = createCellState(empty);
