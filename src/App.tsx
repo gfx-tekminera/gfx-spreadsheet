@@ -20,16 +20,20 @@ function App() {
         }}
         ref={ref}
         sheetData={[
-          { name: 'lele', age: 1, gender: 'm', title: '', },
-          { name: 'yeye', age: 2, gender: 'f', title: '', },
-          { name: 'hehe', age: 3, gender: 'm', title: '', },
+          { name: 'lele', age: 1, gender: 'm', title: '', booking: '', checkin: '', earlyCheckin: '', additional: '', },
+          { name: 'yeye', age: 2, gender: 'f', title: '', booking: '', checkin: '', earlyCheckin: '', additional: '', },
+          { name: 'hehe', age: 3, gender: 'm', title: '', booking: '', checkin: '', earlyCheckin: '', additional: '', },
         ]}
         sheetOption={{
-          includes: ['name', 'age', 'gender', 'title',],
+          includes: ['name', 'age', 'gender', 'title', 'booking', 'checkin', 'earlyCheckin', 'additional',],
           columnType: {
             age: 'number',
             gender: 'dropdown',
             title: 'dropdown',
+            booking: 'date',
+            checkin: 'time',
+            earlyCheckin: 'checkbox',
+            additional: 's_creatable',
           },
           valuesMap: {
             gender: ['m', 'f',],

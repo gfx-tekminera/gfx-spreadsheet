@@ -1,8 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { ReactGrid, Column, Row, Id, CellChange, CellLocation, CellStyle } from '@silevis/reactgrid';
 
-// import './react-grid-styles.css';
-// import './spreadsheet.css';
 import { 
   TextCreatableCellTemplate,
   ModifiedDropdownCellTemplate,
@@ -1020,7 +1018,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   };
 
   const handleFocusLocationChanging = (location: CellLocation): boolean => {
-    setFocusState((prev) => location);
+    setFocusState(() => location);
     return true
   }
 
@@ -1115,7 +1113,6 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           button: new ButtonCellTemplate(),
         }}
         // set focusLocation from focusState
-        focusLocation={focusState}
         // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
       />
