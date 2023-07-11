@@ -78,7 +78,7 @@ const rollupConfig = [
         ],
     },
     {
-        input: './dist/types/lib/index.d.ts',
+        input: './dist/types/src/lib/index.d.ts',
         output: [
             { file: './dist/gfxComponents.d.ts', format: 'es' }
         ],

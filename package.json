@@ -20,6 +20,8 @@
     "push:np": "npx np --no-publish",
     "rollup": "npx rollup -c",
     "deploy": "npm publish ./dist --access public",
+    "cypress": "npx cypress open",
+    "cypress:debug": "DEBUG=cypress:* npx cypress run",
     "test": "react-scripts test --watchAll=false",
     "dev:test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -58,7 +60,7 @@
     "@types/node": "^16.7.13",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "cypress": "^6.9.1",
+    "cypress": "^6.8.0",
     "react-scripts": "5.0.1",
     "react-select": "^5.7.3",
     "rollup": "^2.43.1",

@@ -1,6 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { Spreadsheet } from './lib/components/Spreadsheet';
-import './styles.css';
+
+export const DATA = [
+  { name: 'lele', age: 1, gender: 'm', title: '', },
+  { name: 'yeye', age: 2, gender: 'f', title: '', },
+  { name: 'hehe', age: 3, gender: 'm', title: '', },
+];
+export const COLUMNS = ['name', 'age', 'gender', 'title',];
 
 function App() {
   const ref = useRef<any>();
@@ -15,17 +21,13 @@ function App() {
         style={{
           fontFamily: 'monospace',
           fontWeight: 'bolder',
-          // color: 'chocolate',
+          color: 'greenyellow',
           backgroundColor: 'beige',
         }}
         ref={ref}
-        sheetData={[
-          { name: 'lele', age: 1, gender: 'm', title: '', },
-          { name: 'yeye', age: 2, gender: 'f', title: '', },
-          { name: 'hehe', age: 3, gender: 'm', title: '', },
-        ]}
+        sheetData={DATA}
         sheetOption={{
-          includes: ['name', 'age', 'gender', 'title',],
+          includes: COLUMNS,
           columnType: {
             age: 'number',
             gender: 'dropdown',
