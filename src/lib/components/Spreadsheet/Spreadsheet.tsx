@@ -20,6 +20,7 @@ import {
   StyleState, SpreadsheetCellStyle, StyleStateNote,
 } from './Spreadsheet.types';
 import { isRangePattern, isColonPattern } from '../../helpers';
+import { getParser, replaceVariable } from './formulaParser';
 
 const reorderArray = <T extends object>(arr: T[], idxs: number[], to: number) => {
   const movedElements = arr.filter((_, idx) => idxs.includes(idx));
@@ -683,20 +684,34 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           style: getCellStyle(row._idx as Id, dataKey),
         }
       }
-      case 'text': {
-        return {
-          type,
-          text: cellValue?.toString() || '',
-          nonEditable,
-          style: getCellStyle(row._idx as Id, dataKey),
-        }
-      }
+      case 'text': 
       default: {
         return {
           type: 'text',
           text: cellValue?.toString() || '',
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
+          renderer: (text: string): string => {
+            const formulaParser = getParser();
+            // TODO: formula pattern?
+            if (text.startsWith('=')) {
+              let cellText = text;
+              // TODO: parse variable pattern
+              try {
+                // parse formula(row, sheetData)
+                // cellText = String(formulaParser.calculateFormula(text, 0));
+                // cellText = replaceVariable(text, row, data);
+                cellText = String(formulaParser.calculateFormula(
+                  replaceVariable(text, row, data), 0
+                ));
+              } catch (error) {
+                console.log(error);
+                cellText = '#FORMULA';
+              }
+              return cellText;
+            }
+            return text;
+          },
         }
       }
     }
