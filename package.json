@@ -1,7 +1,7 @@
 {
   "name": "gfx-spreadsheet",
   "description": "React datagrid that is more focused on data",
-  "version": "0.1.4-rc.1",
+  "version": "0.1.4-rc.2",
   "main": "core/gfxComponents.js",
   "module": "core/gfxComponents.esm.js",
   "types": "gfxComponents.d.ts",
