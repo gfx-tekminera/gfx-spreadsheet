@@ -23,7 +23,11 @@ class TextCreatableCellTemplate implements CellTemplate<TextCreatableCell> {
       selectedValue = undefined;
     }
 
-    const options = getCellProperty(uncertainCell, 'options', 'object');
+    let options = [];
+    try {
+      options = getCellProperty(uncertainCell, 'options', 'object');
+    } catch {
+    }
     const value = selectedValue ? parseFloat(selectedValue) : NaN;
 
     let isDisabled = true;

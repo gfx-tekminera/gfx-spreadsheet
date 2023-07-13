@@ -1,7 +1,7 @@
 {
   "name": "gfx-spreadsheet",
   "description": "React datagrid that is more focused on data",
-  "version": "0.1.3",
+  "version": "0.1.4-rc.1",
   "main": "core/gfxComponents.js",
   "module": "core/gfxComponents.esm.js",
   "types": "gfxComponents.d.ts",
@@ -82,5 +82,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "hyperformula": "^2.5.0"
   }
 }

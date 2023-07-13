@@ -2,11 +2,11 @@ import React, { useState, useRef } from 'react';
 import { Spreadsheet } from './lib/components/Spreadsheet';
 
 export const DATA = [
-  { name: 'lele', age: 1, gender: 'm', title: '', },
-  { name: 'yeye', age: 2, gender: 'f', title: '', },
-  { name: 'hehe', age: 3, gender: 'm', title: '', },
+  { name: 'lele', age: 1, gender: 'm', title: '', booking: '', checkin: '', earlyCheckin: '', additional: '', },
+  { name: 'yeye', age: 2, gender: 'f', title: '', booking: '', checkin: '', earlyCheckin: '', additional: '', },
+  { name: 'hehe', age: 3, gender: 'm', title: '', booking: '', checkin: '', earlyCheckin: '', additional: '', },
 ];
-export const COLUMNS = ['name', 'age', 'gender', 'title',];
+export const COLUMNS = ['name', 'age', 'gender', 'title', 'booking', 'checkin', 'earlyCheckin', 'additional',];
 
 function App() {
   const ref = useRef<any>();
@@ -32,6 +32,10 @@ function App() {
             age: 'number',
             gender: 'dropdown',
             title: 'dropdown',
+            booking: 'date',
+            checkin: 'time',
+            earlyCheckin: 'checkbox',
+            additional: 's_creatable',
           },
           valuesMap: {
             gender: ['m', 'f',],

@@ -66,6 +66,12 @@ export type SpreadsheetCellStyle = Record<Row['rowId'], ColumnStyle>;
 export type CellStyleMap = Partial<RowStyle | ColumnStyle | SpreadsheetCellStyle>;
 export type StyleState = StyleStateNote | CellStyleMap;
 
+export type CalculateMapCallback = (
+  row: DataRow,
+  data: DataRow[],
+  location: CellLocation,
+) => DataRowValue;
+
 export type SpreadSheetOption = {
   // cell type columnType[key] for DataRow[key]
   columnType: SpreadSheetColumnOption;
@@ -93,8 +99,7 @@ export type SpreadSheetOption = {
   // map column name to be readOnly
   readOnly: Record<keyof DataRow, boolean>;
   // dynamically set readonly column with callback
-  // TODO: callback using DataRow[] and CellLocation instead of DataRow
-  calculateMap: Record<keyof DataRow, (row: DataRow) => DataRowValue>;
+  calculateMap: Record<keyof DataRow, CalculateMapCallback>;
   // dynamicaly use callback `fn` to do validation, returning boolean
   // location is cell location currently being validated
   // if false, return `message`

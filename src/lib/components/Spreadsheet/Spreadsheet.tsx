@@ -1,8 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import { ReactGrid, Column, Row, Id, CellChange, CellLocation, CellStyle } from '@silevis/reactgrid';
 
-// import './react-grid-styles.css';
-// import './spreadsheet.css';
 import { 
   TextCreatableCellTemplate,
   ModifiedDropdownCellTemplate,
@@ -20,6 +18,7 @@ import {
   StyleState, SpreadsheetCellStyle, StyleStateNote,
 } from './Spreadsheet.types';
 import { isRangePattern, isColonPattern } from '../../helpers';
+import { getParser, replaceVariable } from './formulaParser';
 
 const reorderArray = <T extends object>(arr: T[], idxs: number[], to: number) => {
   const movedElements = arr.filter((_, idx) => idxs.includes(idx));
@@ -206,7 +205,13 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         ),
         Object.fromEntries(Object.entries(row).map(([key, val]) => {
           if (calculateMap[key]) {
-            return [key, calculateMap[key](row)]
+            return [
+              key, calculateMap[key](
+                row,
+                sheetData,
+                {rowId: idx, columnId: key}
+              )
+            ]
           }
           return [key, val];
         })),
@@ -490,7 +495,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           return [key, val]
         }
         if (key in calculateMap && val === '') {
-          return [key, calculateMap[key](row).toString()]
+          return [key, calculateMap[key](
+            row,
+            data,
+            {rowId: row._idx as Id, columnId: key},
+          ).toString()];
         }
         return [key, val?.toString() || '']
       },
@@ -565,6 +574,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     row: DataRow,
     state: CellState,
     dataKey: string,
+    dataRow: DataRow[],
     options: SpreadSheetProps['sheetOption'] = {},
   ): SpreadSheetCellTypes => {
     let nonEditable: SpreadSheetOption['readOnly'][string] = false;
@@ -579,7 +589,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     // cell value: taking value from sheetData or calculated
     let cellValue: DataRowValue | undefined = row[dataKey];
     if (nonEditable && calculateMap !== undefined) {
-      cellValue = calculateMap(row) || '';
+      cellValue = calculateMap(
+        row,
+        dataRow,
+        {rowId: row._idx as Id, columnId: dataKey},
+      ) || '';
     }
 
     switch(type) {
@@ -668,20 +682,34 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           style: getCellStyle(row._idx as Id, dataKey),
         }
       }
-      case 'text': {
-        return {
-          type,
-          text: cellValue?.toString() || '',
-          nonEditable,
-          style: getCellStyle(row._idx as Id, dataKey),
-        }
-      }
+      case 'text': 
       default: {
         return {
           type: 'text',
           text: cellValue?.toString() || '',
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
+          renderer: (text: string): string => {
+            const formulaParser = getParser();
+            // TODO: formula pattern?
+            if (text.startsWith('=')) {
+              let cellText = text;
+              // TODO: parse variable pattern
+              try {
+                // parse formula(row, sheetData)
+                // cellText = String(formulaParser.calculateFormula(text, 0));
+                // cellText = replaceVariable(text, row, data);
+                cellText = String(formulaParser.calculateFormula(
+                  replaceVariable(text, row, data), 0
+                ));
+              } catch (error) {
+                console.log(error);
+                cellText = '#FORMULA';
+              }
+              return cellText;
+            }
+            return text;
+          },
         }
       }
     }
@@ -719,6 +747,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             _row,
             cellState,
             val.toString(),
+            dataRow,
             props?.sheetOption || {},
           )
         }
@@ -805,7 +834,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       prevData[rowIndex][fieldName] = getCellData(cell);
       Object.keys(calculateMap).forEach(key => {
         if (key in prevData[rowIndex]) {
-          prevData[rowIndex][key] = calculateMap[key](prevData[rowIndex]);
+          prevData[rowIndex][key] = calculateMap[key](
+            prevData[rowIndex],
+            prevData,
+            {rowId: change.rowId, columnId: change.columnId},
+          );
         }
       });
       // should validation done per changes or once for the whole sheet?
@@ -1000,7 +1033,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   };
 
   const handleFocusLocationChanging = (location: CellLocation): boolean => {
-    setFocusState((prev) => location);
+    setFocusState(() => location);
     return true
   }
 
@@ -1021,7 +1054,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             });
             Object.keys(calculateMap).forEach(key => {
               if (key in calculateMap) {
-                empty[key] = calculateMap[key](empty).toString();
+                empty[key] = calculateMap[key](
+                  empty,
+                  data,
+                  {rowId: empty._idx as Id, columnId: key},
+                ).toString();
               }
             });
             const newState = createCellState(empty);
@@ -1091,7 +1128,6 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           button: new ButtonCellTemplate(),
         }}
         // set focusLocation from focusState
-        focusLocation={focusState}
         // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
       />

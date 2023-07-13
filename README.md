@@ -32,6 +32,8 @@ const View = () => {
 
 ## Properties
 Typings for props used by `Spreadsheet`
+For context, [CellLocation](https://reactgrid.com/docs/4.0/7-api/0-interfaces/6-cell-location/) are Reactgrid interface that state current active cell location.
+In gfx-spreadsheet cell value can be accessed with `sheetData[cellLocation.rowId][cellLocation.columnId]`.
 ```ts
 export type SpreadSheetProps = {
   sheetData?: DataRow[];
@@ -68,7 +70,7 @@ export type SpreadSheetProps = {
     // map column name to be readOnly
     readOnly?: Record<keyof DataRow, boolean>;
     // dynamically set readonly column with callback
-    calculateMap?: Record<keyof DataRow, (row: DataRow) => DataRowValue>;
+    calculateMap?: Record<keyof DataRow, (row: DataRow, sheetData: DataRow[], location: CellLocation) => DataRowValue>;
 
     // dynamically set validation function and error function
     validateMap?: Record<keyof DataRow, CompositeCellValidation[]>;
@@ -191,7 +193,7 @@ export type SpreadSheetProps = {
     callback function can be set to dynamically set cell value
     ```ts
     const calculateMap = {
-      distance: (row) => {
+      distance: (row, sheetData, location) => {
         return Number(row.endPoint) - Number(row.startPoint);
       },
     }
