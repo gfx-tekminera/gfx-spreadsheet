@@ -320,6 +320,17 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   returns CellStyle mapping for each cell
 
 
+## Cell Formula
+For `text` cell, you can enter Excel formula that will be parsed by [HyperFormula](https://hyperformula.handsontable.com/#what-is-hyperformula) into value. Due to difference in design, addressing data are not in `AB12`-style but using string template of `{{row[colName]}}` and `{{sheetData[idx][colName]}}`.
+
+This reason will also limit how the formula to be parsed. List of available formula syntax are listed [here](https://hyperformula.handsontable.com/guide/built-in-functions.html#list-of-available-functions).  
+
+#### Example:
+- `=IF({{row['name']}} = "lele", "true", "false")`
+- `=IF({{row['age']}} = 0, "true", "false")`
+- `=CONCATENATE("{{row['name']}}", "{{sheetData[0]['age']}}")`
+
+
 ## Dependencies
 ```json
   "react": "18.2.0",
