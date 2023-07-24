@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { Spreadsheet } from './lib/components/Spreadsheet';
+import { Showcase } from './Showcase';
 
 export const DATA = [
   { name: 'lele', age: 1, gender: 'm', title: '', booking: '', checkin: '', earlyCheckin: '', additional: '', },
@@ -8,7 +10,8 @@ export const DATA = [
 ];
 export const COLUMNS = ['name', 'age', 'gender', 'title', 'booking', 'checkin', 'earlyCheckin', 'additional',];
 
-function App() {
+function Basic() {
+  const navigate = useNavigate();
   const ref = useRef<any>();
   const [ titleRef ] = useState<Record<string, string[]>>({
     'm': ['mr', 'sir',],
@@ -88,8 +91,24 @@ function App() {
               ref.current.setFocusState(undefined);
           }}
         >Remove Focus</button>
+        <button
+          onClick={() => {
+            navigate('/showcase');
+          }}
+        >To Showcases</button>
       </div>
     </div>
+  );
+}
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path='/showcase' element={<Showcase />} />
+        <Route path='/' element={<Basic />} />
+        <Route path='*' element={<Basic />} />
+      </Routes>
+    </Router>
   );
 }
 
