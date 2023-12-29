@@ -33,6 +33,7 @@ export type SpreadSheetRow = Row<SpreadSheetCellTypes>
 
 export type DataRowValue = string|number|boolean|Date;
 export type DataRow = {[key: string]: DataRowValue|undefined} & {_idx?: number};
+export type HeaderIcon = {[key: string]: "pencil"|"filter"|"none"|""};
 export type SpreadSheetColumnOption = {
   [key: string]: SpreadSheetCellTypes['type'];
 }
@@ -75,6 +76,8 @@ export type CalculateMapCallback = (
 export type SpreadSheetOption = {
   // cell type columnType[key] for DataRow[key]
   columnType: SpreadSheetColumnOption;
+  // icon for spreadsheet header
+  headerIcon: HeaderIcon
   // list of enum values for DataRow[key]
   valuesMap: Record<keyof DataRow, any[]>;
   // map of function to get label from valuesMap
