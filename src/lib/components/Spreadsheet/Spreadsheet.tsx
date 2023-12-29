@@ -68,7 +68,6 @@ const getValidationMessage = (
   return undefined
 }
 
-
 const getDateTimeFormat = (
   options: SpreadSheetProps['sheetOption'],
   columnType: 'time' | 'date' = 'date',
@@ -760,6 +759,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           dataKey: columnsOrder[_idx].toString(),
           text: headerMap[columnsOrder[_idx]] ?
             headerMap[columnsOrder[_idx]].toString() : columnsOrder[_idx].toString(),
+          icon: props?.sheetOption?.headerIcon ? (props?.sheetOption?.headerIcon[columnsOrder[_idx].toString()] || "none" ): "none",
           style: getHeaderStyle(), // headerStyle
         })),
         ...actionColumns.map((col) => ({
