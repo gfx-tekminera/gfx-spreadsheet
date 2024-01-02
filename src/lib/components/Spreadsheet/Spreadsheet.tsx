@@ -1,30 +1,66 @@
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
-import { ReactGrid, Column, Row, Id, CellChange, CellLocation, CellStyle } from '@silevis/reactgrid';
+import React, {
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+} from "react";
+import {
+  ReactGrid,
+  Column,
+  Row,
+  Id,
+  CellChange,
+  CellLocation,
+  CellStyle,
+} from "@silevis/reactgrid";
 
-import { 
+import {
   TextCreatableCellTemplate,
   ModifiedDropdownCellTemplate,
-  ButtonCell, ButtonCellTemplate,
-  SpreadsheetHeaderTemplate, SpreadsheetHeaderCell,
-} from './templates';
+  ButtonCell,
+  ButtonCellTemplate,
+  SpreadsheetHeaderTemplate,
+  SpreadsheetHeaderCell,
+} from "./templates";
 import {
-  SpreadSheetProps, SpreadSheetOption,
-  SpreadSheetRow, SpreadSheetCellTypes, SpreadSheetColumnOption,
-  DataRow, DataRowValue, DataColumnHeaderMap, DataColumnId,
+  SpreadSheetProps,
+  SpreadSheetOption,
+  SpreadSheetRow,
+  SpreadSheetCellTypes,
+  SpreadSheetColumnOption,
+  DataRow,
+  DataRowValue,
+  DataColumnHeaderMap,
+  DataColumnId,
   RowAction,
   ColumnValuesMap,
-  CellState, CompositeCellValidation,
-  OptionItem, ValidationReport,
-  StyleState, SpreadsheetCellStyle, StyleStateNote,
-} from './Spreadsheet.types';
-import { isRangePattern, isColonPattern } from '../../helpers';
-import { getParser, replaceVariable } from './formulaParser';
+  CellState,
+  CompositeCellValidation,
+  OptionItem,
+  ValidationReport,
+  StyleState,
+  SpreadsheetCellStyle,
+  StyleStateNote,
+} from "./Spreadsheet.types";
+import { isRangePattern, isColonPattern } from "../../helpers";
+import { getParser, replaceVariable } from "./formulaParser";
 
-const reorderArray = <T extends object>(arr: T[], idxs: number[], to: number) => {
+const reorderArray = <T extends object>(
+  arr: T[],
+  idxs: number[],
+  to: number
+) => {
   const movedElements = arr.filter((_, idx) => idxs.includes(idx));
-  const targetIdx = Math.min(...idxs) < to ? to += 1 : to -= idxs.filter(idx => idx < to).length;
-  const leftSide = arr.filter((_, idx) => idx < targetIdx && !idxs.includes(idx));
-  const rightSide = arr.filter((_, idx) => idx >= targetIdx && !idxs.includes(idx));
+  const targetIdx =
+    Math.min(...idxs) < to
+      ? (to += 1)
+      : (to -= idxs.filter((idx) => idx < to).length);
+  const leftSide = arr.filter(
+    (_, idx) => idx < targetIdx && !idxs.includes(idx)
+  );
+  const rightSide = arr.filter(
+    (_, idx) => idx >= targetIdx && !idxs.includes(idx)
+  );
   return [...leftSide, ...movedElements, ...rightSide];
 };
 
@@ -37,16 +73,16 @@ const _newDate = (val: any): Date => {
   } catch {
     return new Date();
   }
-}
+};
 
 const createOption = (
   item: string,
-  getLabel?: (value: string) => string,
+  getLabel?: (value: string) => string
 ): OptionItem => {
   const option = {
     value: item as string,
     label: item as string,
-  }
+  };
   if (getLabel) {
     option.label = getLabel(option.value);
   }
@@ -54,59 +90,57 @@ const createOption = (
     option.label = option.value;
   }
   return option;
-}
+};
 
 const getValidationMessage = (
   validate: CompositeCellValidation,
   location: CellLocation,
-  data: DataRow[],
-): ( string | undefined ) => {
+  data: DataRow[]
+): string | undefined => {
   const notPass = validate.fn(location, data);
   if (notPass) {
     return validate.message;
   }
-  return undefined
-}
-
+  return undefined;
+};
 
 const getDateTimeFormat = (
-  options: SpreadSheetProps['sheetOption'],
-  columnType: 'time' | 'date' = 'date',
+  options: SpreadSheetProps["sheetOption"],
+  columnType: "time" | "date" = "date"
 ): Intl.DateTimeFormat => {
-  const key = columnType === 'date' ? 'dateFormatOptions' : 'timeFormatOptions';
-  const locale = (options && options.sheetLocale) || 'en-US';
+  const key = columnType === "date" ? "dateFormatOptions" : "timeFormatOptions";
+  const locale = (options && options.sheetLocale) || "en-US";
   const dtf = options && options[key];
   let format: Intl.DateTimeFormat;
   format = new Intl.DateTimeFormat();
   try {
-    format = new Intl.DateTimeFormat(
-      locale,
-      dtf,
-    );
+    format = new Intl.DateTimeFormat(locale, dtf);
   } catch {
     //
   }
   return format;
-}
+};
 
-const _newBoolean = (val: DataRowValue|undefined): boolean => {
+const _newBoolean = (val: DataRowValue | undefined): boolean => {
   if (val === undefined) {
-    return false
+    return false;
   }
-  if (typeof val === 'string' || typeof val === 'number') {
+  if (typeof val === "string" || typeof val === "number") {
     try {
       return Boolean(JSON.parse(val.toString()));
     } catch {
-      // 
+      //
     }
   }
   return Boolean(val);
-}
+};
 
-const rangeDelimiter = '-';
+const rangeDelimiter = "-";
 const createRowStyle = (range: string, cellStyle: CellStyle) => {
   if (isRangePattern(range)) {
-    const [start, end] = range.split(rangeDelimiter).map(item => Number(item));
+    const [start, end] = range
+      .split(rangeDelimiter)
+      .map((item) => Number(item));
     const result: Record<number, CellStyle> = {};
     if (start > end) {
       for (let i = end; i <= start; i++) {
@@ -121,25 +155,27 @@ const createRowStyle = (range: string, cellStyle: CellStyle) => {
   } else {
     return { [range]: cellStyle };
   }
-}
+};
 const createColumnStyle = (range: string, cellStyle: CellStyle) => {
   if (isRangePattern(range)) {
     const result: Record<string, CellStyle> = {};
-    range.split(rangeDelimiter).forEach(col => {
+    range.split(rangeDelimiter).forEach((col) => {
       result[col] = cellStyle;
     });
     return result;
   } else {
     return { [range]: cellStyle };
   }
-}
+};
 const createSpreadsheetStyle = (
   rowRange: string,
   colRange: string,
   cellStyle: CellStyle
 ) => {
   if (isRangePattern(rowRange)) {
-    const [start, end] = rowRange.split(rangeDelimiter).map(item => Number(item));
+    const [start, end] = rowRange
+      .split(rangeDelimiter)
+      .map((item) => Number(item));
     const result: Record<number, Record<string, CellStyle>> = {};
     if (start > end) {
       for (let i = end; i <= start; i++) {
@@ -152,24 +188,30 @@ const createSpreadsheetStyle = (
     }
     return result;
   } else {
-    return { [rowRange]: createColumnStyle(colRange, cellStyle) }
+    return { [rowRange]: createColumnStyle(colRange, cellStyle) };
   }
-}
+};
 
 const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   const getHeader = () => {
     if (data.length === 0) {
-      return []
+      return [];
     }
     if (props?.sheetOption?.includes) {
-      return Object.keys(data[0]).slice(1).filter(key => props?.sheetOption?.includes && props.sheetOption.includes.includes(key))
+      return Object.keys(data[0])
+        .slice(1)
+        .filter(
+          (key) =>
+            props?.sheetOption?.includes &&
+            props.sheetOption.includes.includes(key)
+        );
     }
     return Object.keys(data[0]).slice(1);
   };
 
   const getDataColumnHeaderMap = (): DataColumnHeaderMap => {
     const _columnHeaderMap: DataColumnHeaderMap = {
-      rowNum: '#',
+      rowNum: "#",
     };
     const headersLabel_ = props?.sheetOption?.headersLabel || {};
     getHeader().forEach((key) => {
@@ -181,18 +223,21 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     });
     return _columnHeaderMap;
   };
-  const getHeaderColumnType = (header: string, columnType: SpreadSheetColumnOption = {}): SpreadSheetCellTypes['type'] => {
-    return columnType[header] || 'text';
-  }
+  const getHeaderColumnType = (
+    header: string,
+    columnType: SpreadSheetColumnOption = {}
+  ): SpreadSheetCellTypes["type"] => {
+    return columnType[header] || "text";
+  };
 
   const getData = (
     sheetData?: DataRow[],
-    sheetOption?: SpreadSheetProps['sheetOption']
+    sheetOption?: SpreadSheetProps["sheetOption"]
   ) => {
     const sheetOption_ = Object.assign({}, sheetOption);
     const calculateMap = sheetOption_?.calculateMap || {};
     if (sheetData === null || sheetData === undefined) {
-      return []
+      return [];
     }
     const columnOrder = sheetOption_?.includes || [];
     return sheetData.map((row, idx) => {
@@ -200,44 +245,51 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       // calculate current 'row' value before passing to calculateMap[key](row)
       const row_ = Object.assign(
         Object.assign(
-          {_idx: idx},
-          Object.fromEntries(columnOrder.map((key) => [key, ''])),
+          { _idx: idx },
+          Object.fromEntries(columnOrder.map((key) => [key, ""]))
         ),
-        Object.fromEntries(Object.entries(row).map(([key, val]) => {
-          if (calculateMap[key]) {
-            return [
-              key, calculateMap[key](
-                row,
-                sheetData,
-                {rowId: idx, columnId: key}
-              )
-            ]
-          }
-          return [key, val];
-        })),
+        Object.fromEntries(
+          Object.entries(row).map(([key, val]) => {
+            if (calculateMap[key]) {
+              return [
+                key,
+                calculateMap[key](row, sheetData, {
+                  rowId: idx,
+                  columnId: key,
+                }),
+              ];
+            }
+            return [key, val];
+          })
+        )
       );
       return row_;
     });
-  }
+  };
 
-  const [data, setData] = useState<DataRow[]>(getData(props?.sheetData, props?.sheetOption));
-  const [dataColumnHeaderMap, setDataColumnHeaderMap] = useState<DataColumnHeaderMap>(getDataColumnHeaderMap())
-  const [cellChanges, setCellChanges] = useState<CellChange<SpreadSheetCellTypes>[][]>(() => []);
+  const [data, setData] = useState<DataRow[]>(
+    getData(props?.sheetData, props?.sheetOption)
+  );
+  const [dataColumnHeaderMap, setDataColumnHeaderMap] =
+    useState<DataColumnHeaderMap>(getDataColumnHeaderMap());
+  const [cellChanges, setCellChanges] = useState<
+    CellChange<SpreadSheetCellTypes>[][]
+  >(() => []);
   const [cellChangesIndex, setCellChangesIndex] = useState(() => -1);
 
   const getRowActions = (): Record<string, RowAction> => {
     return props?.sheetOption?.rowActions || {};
-  }
+  };
   const _getColumnSize = (idx: number) => {
     const columnSize: number[] = props?.sheetOption?.columnSize || [];
     if (columnSize.length <= idx) {
-      return 100 // default column size
+      return 100; // default column size
     }
     return columnSize[idx];
-  }
+  };
   const getColumns = (): Column[] => {
     const columns: Column[] = [
-      { columnId: 'rowNum', width: 50, resizable: false, reorderable: false, },
+      { columnId: "rowNum", width: 50, resizable: false, reorderable: false },
     ];
     if (data.length === 0) {
       return columns;
@@ -260,15 +312,14 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
 
     Object.keys(dataColumnHeaderMap).forEach((key) => {
       const _colType = getHeaderColumnType(key, props?.sheetOption?.columnType);
-      if (_colType === 'dropdown' ||
-          _colType === 's_creatable') {
+      if (_colType === "dropdown" || _colType === "s_creatable") {
         delete valuesMap[key];
         valuesMap[key] = new Set([]);
         valuesMap[key].clear();
         if (key in options) {
           options[key].forEach((item) => {
             valuesMap[key].add(item);
-          })
+          });
           isFromOption = true;
         }
       }
@@ -278,21 +329,21 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     }
 
     data.forEach((row) => {
-      Object.keys(valuesMap).forEach(key => {
+      Object.keys(valuesMap).forEach((key) => {
         if (key in row) {
           valuesMap[key].add(row[key]);
         }
       });
     });
     return valuesMap;
-  }
+  };
   const addNewColumnValuesMap = (key: keyof ColumnValuesMap, value: any) => {
     setColumnValuesMap((prev) => {
       const updated = { ...prev };
       updated[key].add(value);
       return updated;
-    })
-  }
+    });
+  };
   const getActionColumns = (): Column[] => {
     const rowActionMap = getRowActions();
     let columns: Column[] = [];
@@ -301,30 +352,32 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     }
     columns = Object.keys(rowActionMap).map((key, idx) => ({
       columnId: `action-${key}`,
-      width: _getColumnSize(idx+getHeader().length),
+      width: _getColumnSize(idx + getHeader().length),
       resizable: false,
       reorderable: false,
-    }))
+    }));
     return columns;
-  }
+  };
 
   const createCellState = (row: DataRow): CellState => {
     return Object.assign(
-      {_idx: row._idx},
-      ...Object.keys(row).filter(key => key !== '_idx').map(key => ({[key]: {}})),
-    )
-  }
+      { _idx: row._idx },
+      ...Object.keys(row)
+        .filter((key) => key !== "_idx")
+        .map((key) => ({ [key]: {} }))
+    );
+  };
   const getCellState = (): CellState[] => {
     return data.map((row) => createCellState(row));
-  }
+  };
 
   // to access cell value => data[rowId][columnId]
   // to access cell validation => validation[rowId][columnId] ????
   // TODO: rather than splitting between `fn` and `message`,
   // why dont validation function returns `string` ?
   const getCellValidations = (
-    data: SpreadSheetProps['sheetData'],
-    sheetOption: SpreadSheetProps['sheetOption'],
+    data: SpreadSheetProps["sheetData"],
+    sheetOption: SpreadSheetProps["sheetOption"]
   ): ValidationReport => {
     const result = {};
     const validateMap = sheetOption?.validateMap || {};
@@ -337,23 +390,22 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       rowValidation = {};
       Object.keys(row).forEach((column) => {
         if (column in validateMap) {
-          validationMessage = validateMap[column].map(validate_ => {
-            return getValidationMessage(
-              validate_,
-              { rowId: row._idx as Id, columnId: column },
-              data,
-            )
-          }).filter(item => item !== undefined) as string[];
-          Object.assign(
-            rowValidation,
-            { [column]: validationMessage },
-          );
+          validationMessage = validateMap[column]
+            .map((validate_) => {
+              return getValidationMessage(
+                validate_,
+                { rowId: row._idx as Id, columnId: column },
+                data
+              );
+            })
+            .filter((item) => item !== undefined) as string[];
+          Object.assign(rowValidation, { [column]: validationMessage });
         }
       });
       Object.assign(result, { [row._idx as Id]: rowValidation });
     });
     return result;
-  }
+  };
 
   // parse initial spreadsheet style
   // style in range of columns and rows
@@ -370,29 +422,30 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   // only colNameA and colNameZ instead of "colNameA through colNameZ"
   const createStyleState = (): StyleState => {
     const initialStyles = props?.sheetOption?.initialSheetStyle || [];
-    let styleType: StyleStateNote['type'];
-    const state_: StyleState = { type: 'columnstyle' };
+    let styleType: StyleStateNote["type"];
+    const state_: StyleState = { type: "columnstyle" };
 
-    initialStyles.forEach(item => {
+    initialStyles.forEach((item) => {
       if (item && item?.at(0) && isColonPattern(item[0])) {
         const strRange: string = item[0];
-        const [rowRange, colRange] = strRange.split(':');
+        const [rowRange, colRange] = strRange.split(":");
         if (styleType === undefined) {
-          if (rowRange === '') {
-            styleType = 'columnstyle';
-          } else if (colRange === '') {
-            styleType = 'rowstyle';
+          if (rowRange === "") {
+            styleType = "columnstyle";
+          } else if (colRange === "") {
+            styleType = "rowstyle";
           } else {
-            styleType = 'cellstyle';
+            styleType = "cellstyle";
           }
 
-          state_['type'] = styleType;
+          state_["type"] = styleType;
         }
 
         if (rowRange && colRange) {
           // assign SpreadsheetCellStyle
           Object.assign(
-            state_, createSpreadsheetStyle(rowRange, colRange, item[1])
+            state_,
+            createSpreadsheetStyle(rowRange, colRange, item[1])
           );
         } else if (rowRange) {
           // assign rowstyle
@@ -404,61 +457,69 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       }
     });
     return state_;
-  }
+  };
 
   const [columns, setColumns] = useState<Column[]>(getColumns());
-  const [actionColumns] = useState<Column[]>(getActionColumns())
-  const [columnValuesMap, setColumnValuesMap] = useState<ColumnValuesMap>(getColumnValuesMap());
-  const _getColumnsWidth = () => columns.slice(1).map(col => col.width).filter(item => item !== undefined);
+  const [actionColumns] = useState<Column[]>(getActionColumns());
+  const [columnValuesMap, setColumnValuesMap] = useState<ColumnValuesMap>(
+    getColumnValuesMap()
+  );
+  const _getColumnsWidth = () =>
+    columns
+      .slice(1)
+      .map((col) => col.width)
+      .filter((item) => item !== undefined);
   const [cellStates, setCellStates] = useState<CellState[]>(getCellState());
-  const [focusState, setFocusState] = useState<CellLocation|undefined>(undefined);
+  const [focusState, setFocusState] = useState<CellLocation | undefined>(
+    undefined
+  );
   const [validationReport, setValidationReport] = useState<ValidationReport>(
     getCellValidations(data, props?.sheetOption)
   );
-  const [styleState, setStyleState] = useState<StyleState>(() => createStyleState());
+  const [styleState, setStyleState] = useState<StyleState>(() =>
+    createStyleState()
+  );
 
   useEffect(() => {
     const data_ = getData(props?.sheetData, props?.sheetOption);
     setData(data_);
-    setCellStates(prev => getCellState());
+    setCellStates((prev) => getCellState());
     setDataColumnHeaderMap(getDataColumnHeaderMap());
     setCellChanges([]);
     setCellChangesIndex(-1);
     setColumns(getColumns());
     setColumnValuesMap((prev) => getColumnValuesMap());
-    setValidationReport(
-      getCellValidations(data_, props?.sheetOption)
-    );
+    setValidationReport(getCellValidations(data_, props?.sheetOption));
     setStyleState(() => createStyleState());
   }, [props]);
 
   const getValidationStyle = () => {
     return props?.sheetOption?.validationCellStyle || {};
-  }
+  };
   const getCellStyle = (
-    rowId: Row['rowId'],
-    columnId: Column['columnId'],
+    rowId: Row["rowId"],
+    columnId: Column["columnId"]
   ): CellStyle => {
     let cellStyle: Record<string, any> = {};
 
     switch (styleState.type) {
-      case 'rowstyle':
+      case "rowstyle":
         if (rowId in styleState) {
           cellStyle = styleState[rowId] as typeof cellStyle;
         }
         break;
-      case 'columnstyle':
+      case "columnstyle":
         if (columnId in styleState) {
           cellStyle = styleState[columnId] as typeof cellStyle;
         }
         break;
-      case 'cellstyle':
+      case "cellstyle":
         if (
           rowId in styleState &&
-            styleState[rowId] !== undefined &&
-            columnId in (styleState[rowId] as SpreadsheetCellStyle)
+          styleState[rowId] !== undefined &&
+          columnId in (styleState[rowId] as SpreadsheetCellStyle)
         ) {
-          cellStyle = (styleState[rowId] as SpreadsheetCellStyle)[columnId]
+          cellStyle = (styleState[rowId] as SpreadsheetCellStyle)[columnId];
         }
         break;
     }
@@ -474,85 +535,104 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     // TODO: expose validation styling option
     // key => columnId + message
     if (cellValidation.length > 0) {
-      cellStyle.background = 'rgba(240, 23, 23, 0.69)';
+      cellStyle.background = "rgba(240, 23, 23, 0.69)";
       Object.assign(cellStyle, getValidationStyle());
     }
     return cellStyle;
-  }
+  };
 
   const getCellStateValue = (cell: Record<string, any>, key: string) => {
     if (key in cell) {
       return cell[key];
     }
     return null;
-  }
+  };
 
   const dumpData = () => {
     const calculateMap = props?.sheetOption?.calculateMap || {};
-    return data.map((row: DataRow) => Object.fromEntries(Object.entries(row).map(
-      ([key, val]) => {
-        if (key === '_idx') {
-          return [key, val]
-        }
-        if (key in calculateMap && val === '') {
-          return [key, calculateMap[key](
-            row,
-            data,
-            {rowId: row._idx as Id, columnId: key},
-          ).toString()];
-        }
-        return [key, val?.toString() || '']
-      },
-    )));
+    return data.map((row: DataRow) =>
+      Object.fromEntries(
+        Object.entries(row).map(([key, val]) => {
+          if (key === "_idx") {
+            return [key, val];
+          }
+          if (key in calculateMap && val === "") {
+            return [
+              key,
+              calculateMap[key](row, data, {
+                rowId: row._idx as Id,
+                columnId: key,
+              }).toString(),
+            ];
+          }
+          return [key, val?.toString() || ""];
+        })
+      )
+    );
   };
 
   // expose state to ref.current
-  useImperativeHandle(ref, () => ({
-    getColumns: () => columns.slice(1),
-    getData: () => dumpData(),
-    getHeaderMap: () => dataColumnHeaderMap,
-    getRows: () => getRows(
-      data, columns.map(c => c.columnId as DataColumnId), cellStates,
-    ),
-    getValuesMap: () => columnValuesMap,
-    getColumnSize: () => _getColumnsWidth(),
-    getCellStates: () => cellStates,
-    getSheetOption: (): SpreadSheetProps['sheetOption'] => ({
-      includes: props?.sheetOption?.includes,
-      columnSize: _getColumnsWidth() as number[],
-      valuesMap: Object.fromEntries(
-        Object.entries(columnValuesMap).map(([key, val]) => {
-          return [key, [...val]]
-        })
-      ),
-      // labelsMap: props?.sheetOption?.labelsMap || {},
-      columnType: props?.sheetOption?.columnType || {},
-      headersLabel: props?.sheetOption?.headersLabel || {},
-      timeFormatOptions: props?.sheetOption?.timeFormatOptions,
-      dateFormatOptions: props?.sheetOption?.dateFormatOptions,
-      sheetLocale: props?.sheetOption?.sheetLocale,
-      readOnly: props?.sheetOption?.readOnly,
+  useImperativeHandle(
+    ref,
+    () => ({
+      getColumns: () => columns.slice(1),
+      getData: () => dumpData(),
+      getHeaderMap: () => dataColumnHeaderMap,
+      getRows: () =>
+        getRows(
+          data,
+          columns.map((c) => c.columnId as DataColumnId),
+          cellStates
+        ),
+      getValuesMap: () => columnValuesMap,
+      getColumnSize: () => _getColumnsWidth(),
+      getCellStates: () => cellStates,
+      getSheetOption: (): SpreadSheetProps["sheetOption"] => ({
+        includes: props?.sheetOption?.includes,
+        columnSize: _getColumnsWidth() as number[],
+        valuesMap: Object.fromEntries(
+          Object.entries(columnValuesMap).map(([key, val]) => {
+            return [key, [...val]];
+          })
+        ),
+        // labelsMap: props?.sheetOption?.labelsMap || {},
+        columnType: props?.sheetOption?.columnType || {},
+        headersLabel: props?.sheetOption?.headersLabel || {},
+        timeFormatOptions: props?.sheetOption?.timeFormatOptions,
+        dateFormatOptions: props?.sheetOption?.dateFormatOptions,
+        sheetLocale: props?.sheetOption?.sheetLocale,
+        readOnly: props?.sheetOption?.readOnly,
+      }),
+      getValidationReport: () => {
+        const reports = getCellValidations(data, props?.sheetOption);
+        setValidationReport(reports);
+        return reports;
+      },
+      getStyleState: () => styleState,
+      // expose setFocusState
+      setFocusState: (newState: CellLocation | undefined) => {
+        // console.log('setfocusstate', newState);
+        setFocusState(newState);
+      },
     }),
-    getValidationReport: () => {
-      const reports = getCellValidations(data, props?.sheetOption);
-      setValidationReport(reports);
-      return reports;
-    },
-    getStyleState: () => styleState,
-    // expose setFocusState
-    setFocusState: (newState: CellLocation|undefined) => {
-      // console.log('setfocusstate', newState);
-      setFocusState(newState);
-    },
-  }), [columns, data, dataColumnHeaderMap, columnValuesMap, validationReport, styleState, focusState]);
+    [
+      columns,
+      data,
+      dataColumnHeaderMap,
+      columnValuesMap,
+      validationReport,
+      styleState,
+      focusState,
+    ]
+  );
 
   const getSpreadsheetColumnValuesMap = (
     dataKey: string,
     row: DataRow,
-    options: SpreadSheetProps['sheetOption'] = {},
+    options: SpreadSheetProps["sheetOption"] = {}
   ): OptionItem[] => {
     if (!columnValuesMap[dataKey]) {
-      return []
+      return [];
     }
     let labelMap: ((val: string) => string) | undefined = undefined;
     if (options?.labelsMap !== undefined && dataKey in options.labelsMap) {
@@ -561,55 +641,59 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     let values = Array.from(columnValuesMap[dataKey]);
     if (options?.valuesFilter && dataKey in options.valuesFilter) {
       const filter_ = options.valuesFilter[dataKey];
-      values = values.filter(item => {
+      values = values.filter((item) => {
         return filter_(item, row);
       });
     }
-    return values.map(val => createOption(val, labelMap));
-  }
+    return values.map((val) => createOption(val, labelMap));
+  };
 
   // TODO: handle copy/paste value are taken from cell.text
   const createCellProps = (
-    type: SpreadSheetCellTypes['type'],
+    type: SpreadSheetCellTypes["type"],
     row: DataRow,
     state: CellState,
     dataKey: string,
     dataRow: DataRow[],
-    options: SpreadSheetProps['sheetOption'] = {},
+    options: SpreadSheetProps["sheetOption"] = {}
   ): SpreadSheetCellTypes => {
-    let nonEditable: SpreadSheetOption['readOnly'][string] = false;
+    let nonEditable: SpreadSheetOption["readOnly"][string] = false;
     if (options?.readOnly !== undefined && dataKey in options.readOnly) {
       nonEditable = options.readOnly[dataKey];
     }
-    let calculateMap: SpreadSheetOption['calculateMap'][string] | undefined = undefined;
-    if (options?.calculateMap !== undefined && dataKey in options.calculateMap) {
+    let calculateMap: SpreadSheetOption["calculateMap"][string] | undefined =
+      undefined;
+    if (
+      options?.calculateMap !== undefined &&
+      dataKey in options.calculateMap
+    ) {
       calculateMap = options.calculateMap[dataKey];
     }
 
     // cell value: taking value from sheetData or calculated
     let cellValue: DataRowValue | undefined = row[dataKey];
     if (nonEditable && calculateMap !== undefined) {
-      cellValue = calculateMap(
-        row,
-        dataRow,
-        {rowId: row._idx as Id, columnId: dataKey},
-      ) || '';
+      cellValue =
+        calculateMap(row, dataRow, {
+          rowId: row._idx as Id,
+          columnId: dataKey,
+        }) || "";
     }
 
-    switch(type) {
-      case 's_creatable': {
+    switch (type) {
+      case "s_creatable": {
         return {
           type,
           // inputValue: row[dataKey].toString(),
           options: getSpreadsheetColumnValuesMap(dataKey, row, options),
           selectedValue: cellValue?.toString(),
-          isOpen: getCellStateValue(state[dataKey], 'isOpen') || false,
+          isOpen: getCellStateValue(state[dataKey], "isOpen") || false,
           // text: row[dataKey]?.toString() || '',
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
-        }
+        };
       }
-      case 'dropdown': {
+      case "dropdown": {
         const customOptionMap = options?.customOption || {};
         let customOption = undefined;
         if (dataKey in customOptionMap) {
@@ -620,158 +704,192 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         if (dataKey in customSingleValueMap) {
           customSingleValue = customSingleValueMap[dataKey];
         }
-        let labelMap: SpreadSheetOption['labelsMap'][string] | undefined = undefined;
+        let labelMap: SpreadSheetOption["labelsMap"][string] | undefined =
+          undefined;
         if (options?.labelsMap !== undefined && dataKey in options.labelsMap) {
           labelMap = options.labelsMap[dataKey];
         }
         return {
           type,
-          inputValue: createOption(row[dataKey]?.toString() || '', labelMap).label,
+          inputValue: createOption(row[dataKey]?.toString() || "", labelMap)
+            .label,
           selectedValue: cellValue?.toString(),
           values: getSpreadsheetColumnValuesMap(dataKey, row, options),
-          isOpen: getCellStateValue(state[dataKey], 'isOpen') || false,
-          text: row[dataKey]?.toString() || '',
+          isOpen: getCellStateValue(state[dataKey], "isOpen") || false,
+          text: row[dataKey]?.toString() || "",
           componentOption: customOption,
           componentSingleValue: customSingleValue,
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
-        }
+        };
       }
-      case 'checkbox': {
+      case "checkbox": {
         return {
           type,
           checked: _newBoolean(cellValue),
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
-        }
+        };
       }
-      case 'date': {
+      case "date": {
         return {
           type,
           date: _newDate(cellValue),
           // text: row[dataKey]?.toString() || '',
-          format: getDateTimeFormat(options,),
+          format: getDateTimeFormat(options),
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
-        }
+        };
       }
-      case 'time': {
+      case "time": {
         return {
           type,
           time: _newDate(cellValue),
           // text: row[dataKey]?.toString() || '',
-          format: getDateTimeFormat(options, 'time'),
+          format: getDateTimeFormat(options, "time"),
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
-        }
+        };
       }
-      case 'email': {
+      case "email": {
         return {
           type,
-          text: cellValue ? cellValue.toString() : '',
-          validator: (v: string) => /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(v),
+          text: cellValue ? cellValue.toString() : "",
+          validator: (v: string) =>
+            /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
+              v
+            ),
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
-        }
+        };
       }
-      case 'number': {
+      case "number": {
         return {
           type,
           value: Number(cellValue),
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
-        }
+        };
       }
-      case 'text': 
+      case "text":
       default: {
         return {
-          type: 'text',
-          text: cellValue?.toString() || '',
+          type: "text",
+          text: cellValue?.toString() || "",
           nonEditable,
           style: getCellStyle(row._idx as Id, dataKey),
           renderer: (text: string): string => {
             const formulaParser = getParser();
             // TODO: formula pattern?
-            if (text.startsWith('=')) {
+            if (text.startsWith("=")) {
               let cellText = text;
               // TODO: parse variable pattern
               try {
                 // parse formula(row, sheetData)
                 // cellText = String(formulaParser.calculateFormula(text, 0));
                 // cellText = replaceVariable(text, row, data);
-                cellText = String(formulaParser.calculateFormula(
-                  replaceVariable(text, row, data), 0
-                ));
+                cellText = String(
+                  formulaParser.calculateFormula(
+                    replaceVariable(text, row, data),
+                    0
+                  )
+                );
               } catch (error) {
                 console.log(error);
-                cellText = '#FORMULA';
+                cellText = "#FORMULA";
               }
               return cellText;
             }
             return text;
           },
-        }
+        };
       }
     }
-  }
+  };
 
-  const rowActionToButtonCell = (action: RowAction, row: DataRow): ButtonCell => {
+  const rowActionToButtonCell = (
+    action: RowAction,
+    row: DataRow
+  ): ButtonCell => {
     const decorated = (e: React.MouseEvent) => {
-      return action?.action && action.action(e, row)
-    }
+      return action?.action && action.action(e, row);
+    };
     return {
-      type: 'button',
+      type: "button",
       text: action.text,
       onClick: decorated,
       component: action?.component,
-    }
-  }
+    };
+  };
 
   const getHeaderStyle = (): CellStyle => {
     return props?.sheetOption?.headerStyle || {};
-  }
+  };
 
   const getRows = (
     dataRow: DataRow[],
     columnsOrder: DataColumnId[],
-    cellStates: CellState[],
+    cellStates: CellState[]
   ): SpreadSheetRow[] => {
-    const itemRows = (_row: DataRow, cellState: CellState): SpreadSheetCellTypes[] => {
-      return columnsOrder.slice(1).map<SpreadSheetCellTypes>((val) => Object.assign(
-        {
-          type: getHeaderColumnType(val.toString(), props?.sheetOption?.columnType),
-        },
-        {
-          ...createCellProps(
-            getHeaderColumnType(val.toString(), props?.sheetOption?.columnType),
-            _row,
-            cellState,
-            val.toString(),
-            dataRow,
-            props?.sheetOption || {},
-          )
-        }
-      ));
-    }
-    const headersRow = (_col: Column[], headerMap: DataColumnHeaderMap): SpreadsheetHeaderCell[] => {
+    const itemRows = (
+      _row: DataRow,
+      cellState: CellState
+    ): SpreadSheetCellTypes[] => {
+      return columnsOrder.slice(1).map<SpreadSheetCellTypes>((val) =>
+        Object.assign(
+          {
+            type: getHeaderColumnType(
+              val.toString(),
+              props?.sheetOption?.columnType
+            ),
+          },
+          {
+            ...createCellProps(
+              getHeaderColumnType(
+                val.toString(),
+                props?.sheetOption?.columnType
+              ),
+              _row,
+              cellState,
+              val.toString(),
+              dataRow,
+              props?.sheetOption || {}
+            ),
+          }
+        )
+      );
+    };
+    const headersRow = (
+      _col: Column[],
+      headerMap: DataColumnHeaderMap
+    ): SpreadsheetHeaderCell[] => {
       return [
         ..._col.map((_, _idx) => ({
-          type: 's_header',
+          type: "s_header",
           dataKey: columnsOrder[_idx].toString(),
-          text: headerMap[columnsOrder[_idx]] ?
-            headerMap[columnsOrder[_idx]].toString() : columnsOrder[_idx].toString(),
+          text: headerMap[columnsOrder[_idx]]
+            ? headerMap[columnsOrder[_idx]].toString()
+            : columnsOrder[_idx].toString(),
+          icon: props?.sheetOption?.headerIcon
+            ? props?.sheetOption?.headerIcon[columnsOrder[_idx].toString()] ||
+              function () {
+                return;
+              }
+            : function () {
+                return;
+              },
           style: getHeaderStyle(), // headerStyle
         })),
         ...actionColumns.map((col) => ({
-          type: 's_header',
-          text: getRowActions()[col.columnId.toString().split('-')[1]].text,
-          dataKey: getRowActions()[col.columnId.toString().split('-')[1]].text,
+          type: "s_header",
+          text: getRowActions()[col.columnId.toString().split("-")[1]].text,
+          dataKey: getRowActions()[col.columnId.toString().split("-")[1]].text,
         })),
       ] as SpreadsheetHeaderCell[];
-    }
+    };
     return [
       {
-        rowId: 'header',
+        rowId: "header",
         cells: headersRow(columns, dataColumnHeaderMap),
       },
       ...dataRow.map<SpreadSheetRow>((row, rowIdx) => ({
@@ -780,22 +898,24 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // height: 80,
         cells: [
           {
-            type: 'header',
+            type: "header",
             text: rowIdx.toString(),
             style: getHeaderStyle(), // headerStyle
           },
           ...itemRows(row, cellStates[rowIdx] || createCellState(row)),
           // add action cell here?
-          ...Object.values(getRowActions()).map((item) => rowActionToButtonCell(item, row)),
-        ]
+          ...Object.values(getRowActions()).map((item) =>
+            rowActionToButtonCell(item, row)
+          ),
+        ],
       })),
-    ]
-  }
+    ];
+  };
 
   // extracting text/selected value in CellChange<T>
   // used in applyNewValue
   const getCellData = (cell: SpreadSheetCellTypes) => {
-    switch(cell.type) {
+    switch (cell.type) {
       case "s_creatable":
       case "dropdown": {
         return cell.selectedValue;
@@ -817,225 +937,251 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         return cell.text;
       }
     }
-  }
+  };
 
   const applyNewValue = (
     changes: CellChange<SpreadSheetCellTypes>[],
     prevData: DataRow[],
-    sheetOption: SpreadSheetProps['sheetOption'],
-    usePrevValue = false,
+    sheetOption: SpreadSheetProps["sheetOption"],
+    usePrevValue = false
   ): DataRow[] => {
     const calculateMap = sheetOption?.calculateMap || {};
     const validateMap = sheetOption?.validateMap || {};
     changes.forEach((change) => {
-      const rowIndex = prevData.findIndex(row => row._idx === change.rowId);
+      const rowIndex = prevData.findIndex((row) => row._idx === change.rowId);
       const fieldName = change.columnId;
       const cell = usePrevValue ? change.previousCell : change.newCell;
       prevData[rowIndex][fieldName] = getCellData(cell);
-      Object.keys(calculateMap).forEach(key => {
+      Object.keys(calculateMap).forEach((key) => {
         if (key in prevData[rowIndex]) {
           prevData[rowIndex][key] = calculateMap[key](
             prevData[rowIndex],
             prevData,
-            {rowId: change.rowId, columnId: change.columnId},
+            { rowId: change.rowId, columnId: change.columnId }
           );
         }
       });
       // should validation done per changes or once for the whole sheet?
       const rowValidations: Record<string, string[]> = {};
-      Object.keys(validateMap).forEach(key => {
-        const validationMessage = validateMap[key].map(validate_ => {
-          return getValidationMessage(
-            validate_,
-            { rowId: change.rowId, columnId: key },
-            prevData,
-          );
-        }).filter(item => item !== undefined);
+      Object.keys(validateMap).forEach((key) => {
+        const validationMessage = validateMap[key]
+          .map((validate_) => {
+            return getValidationMessage(
+              validate_,
+              { rowId: change.rowId, columnId: key },
+              prevData
+            );
+          })
+          .filter((item) => item !== undefined);
         Object.assign(rowValidations, { [key]: validationMessage });
         setValidationReport((prev) => {
-          return Object.assign(
-            prev,
-            { [change.rowId]: rowValidations }
-          );
+          return Object.assign(prev, { [change.rowId]: rowValidations });
         });
       });
     });
     return [...prevData];
-  }
+  };
   const applyNewCellState = (
     changes: CellChange<SpreadSheetCellTypes>[],
-    prevCellState: CellState[],
+    prevCellState: CellState[]
   ): CellState[] => {
     changes.forEach((change) => {
-      const rowIndex = prevCellState.findIndex(row => row._idx === change.rowId);
+      const rowIndex = prevCellState.findIndex(
+        (row) => row._idx === change.rowId
+      );
       const fieldName = change.columnId;
       const cell = change.newCell;
       prevCellState[rowIndex][fieldName] = { ...cell };
-      if (cell.type === 's_creatable') {
-        const  options = cell?.options || [];
-        options.forEach(item => {
+      if (cell.type === "s_creatable") {
+        const options = cell?.options || [];
+        options.forEach((item) => {
           addNewColumnValuesMap(fieldName, item.value);
         });
       }
-    })
+    });
     return [...prevCellState];
-  }
+  };
 
   const applyChangesToHeader = (
     changes: CellChange<SpreadsheetHeaderCell>[],
-    prevHeader: DataColumnHeaderMap,
+    prevHeader: DataColumnHeaderMap
   ): DataColumnHeaderMap => {
     const updated = { ...prevHeader };
     changes.forEach((change) => {
       const cell = change.newCell;
       const prevCell = change.previousCell;
-      updated[prevCell.dataKey] = cell.text || '';
+      updated[prevCell.dataKey] = cell.text || "";
     });
-    return updated
-  }
+    return updated;
+  };
 
   const getFilterDataChanges = (cell: CellChange<SpreadSheetCellTypes>) => {
     switch (cell.type) {
-      case 's_creatable': {
+      case "s_creatable": {
         if (cell.newCell.options && cell.previousCell.options) {
           return (
             getCellData(cell.newCell) !== getCellData(cell.previousCell) ||
             cell.newCell.options.length !== cell.previousCell.options.length
-          )
+          );
         }
-        return (
-          getCellData(cell.newCell) !== getCellData(cell.previousCell)
-        )
+        return getCellData(cell.newCell) !== getCellData(cell.previousCell);
       }
-      case 'dropdown': {
-        return getCellData(cell.newCell) !== getCellData(cell.previousCell)
+      case "dropdown": {
+        return getCellData(cell.newCell) !== getCellData(cell.previousCell);
       }
       default: {
-        return true
+        return true;
       }
     }
-  }
+  };
   const applyChangesToData = (
     changes: CellChange<SpreadSheetCellTypes>[],
     prevData: DataRow[],
-    sheetOption: SpreadSheetProps['sheetOption'],
+    sheetOption: SpreadSheetProps["sheetOption"]
   ): DataRow[] => {
     const dataChanges = changes.filter((item) => {
-      return getFilterDataChanges(item)
+      return getFilterDataChanges(item);
     });
     if (dataChanges.length > 0) {
       const updated = applyNewValue(changes, prevData, sheetOption);
-      setCellChanges([...cellChanges.slice(0, cellChangesIndex + 1), dataChanges]);
+      setCellChanges([
+        ...cellChanges.slice(0, cellChangesIndex + 1),
+        dataChanges,
+      ]);
       setCellChangesIndex(cellChangesIndex + 1);
       return updated;
     }
-    return prevData
-  }
+    return prevData;
+  };
 
   const applyChangesToCellState = (
     changes: CellChange<SpreadSheetCellTypes>[],
-    prevCellState: CellState[],
+    prevCellState: CellState[]
   ) => {
     const updated = applyNewCellState(changes, prevCellState);
     return updated;
-  }
+  };
 
   const undoChanges = (
     changes: CellChange<SpreadSheetCellTypes>[],
     prevData: DataRow[],
-    sheetOption: SpreadSheetProps['sheetOption'],
+    sheetOption: SpreadSheetProps["sheetOption"]
   ) => {
     const updated = applyNewValue(changes, prevData, sheetOption, true);
     setCellChangesIndex(cellChangesIndex - 1);
     return updated;
-  }
+  };
   const redoChanges = (
     changes: CellChange<SpreadSheetCellTypes>[],
     prevData: DataRow[],
-    sheetOption: SpreadSheetProps['sheetOption'],
+    sheetOption: SpreadSheetProps["sheetOption"]
   ) => {
     const updated = applyNewValue(changes, prevData, sheetOption);
     setCellChangesIndex(cellChangesIndex + 1);
     return updated;
-  }
+  };
 
   const handleChanges = (
-    changes: CellChange<SpreadSheetCellTypes | SpreadsheetHeaderCell>[],
+    changes: CellChange<SpreadSheetCellTypes | SpreadsheetHeaderCell>[]
     // sheetOption: SpreadSheetProps['sheetOption'],
   ) => {
     // changes to header filter by 's_header'
     // else changes to data
-    setDataColumnHeaderMap((prevHeader) => applyChangesToHeader(
-      changes.filter(cell => cell.type === 's_header') as CellChange<SpreadsheetHeaderCell>[],
-      prevHeader,
-    ))
+    setDataColumnHeaderMap((prevHeader) =>
+      applyChangesToHeader(
+        changes.filter(
+          (cell) => cell.type === "s_header"
+        ) as CellChange<SpreadsheetHeaderCell>[],
+        prevHeader
+      )
+    );
     /*
      */
-    setCellStates((prevCellState) => applyChangesToCellState(
-      changes.filter(cell => cell.type !== 's_header') as CellChange<SpreadSheetCellTypes>[],
-      prevCellState,
-    ));
-    setData((prevData) => applyChangesToData(
-      changes.filter(cell => cell.type !== 's_header') as CellChange<SpreadSheetCellTypes>[],
-      prevData,
-      props.sheetOption,
-    ))
-  }
+    setCellStates((prevCellState) =>
+      applyChangesToCellState(
+        changes.filter(
+          (cell) => cell.type !== "s_header"
+        ) as CellChange<SpreadSheetCellTypes>[],
+        prevCellState
+      )
+    );
+    setData((prevData) =>
+      applyChangesToData(
+        changes.filter(
+          (cell) => cell.type !== "s_header"
+        ) as CellChange<SpreadSheetCellTypes>[],
+        prevData,
+        props.sheetOption
+      )
+    );
+  };
   const handleUndoChanges = () => {
-    console.log(cellChangesIndex, 'undo changesindex');
+    console.log(cellChangesIndex, "undo changesindex");
     if (cellChangesIndex >= 0) {
-      setData((prevData) => undoChanges(
-        cellChanges[cellChangesIndex],
-        prevData,
-        props.sheetOption,
-      ));
+      setData((prevData) =>
+        undoChanges(cellChanges[cellChangesIndex], prevData, props.sheetOption)
+      );
     }
-  }
+  };
   const handleRedoChanges = () => {
-    console.log(cellChangesIndex, 'redo changesindex <= cellcahngeslength', cellChanges.length);
+    console.log(
+      cellChangesIndex,
+      "redo changesindex <= cellcahngeslength",
+      cellChanges.length
+    );
     if (cellChangesIndex + 1 <= cellChanges.length - 1) {
-      setData((prevData) => redoChanges(
-        cellChanges[cellChangesIndex + 1],
-        prevData,
-        props.sheetOption,
-      ));
+      setData((prevData) =>
+        redoChanges(
+          cellChanges[cellChangesIndex + 1],
+          prevData,
+          props.sheetOption
+        )
+      );
     }
-  }
+  };
 
   const rows = getRows(
-    data, columns.map(c => c.columnId as DataColumnId), cellStates,
+    data,
+    columns.map((c) => c.columnId as DataColumnId),
+    cellStates
   );
 
   const handleColumnResize = (ci: Id, width: number) => {
     setColumns((prevColumn) => {
-      const columnIndex = prevColumn.findIndex(el => el.columnId === ci);
+      const columnIndex = prevColumn.findIndex((el) => el.columnId === ci);
       const resizedColumn = prevColumn[columnIndex];
-      const updatedColumn = {...resizedColumn, width};
+      const updatedColumn = { ...resizedColumn, width };
       prevColumn[columnIndex] = updatedColumn;
       return [...prevColumn];
     });
   };
 
   const handleColumnsReorder = (targetColumnId: Id, columnsId: Id[]) => {
-    const to = columns.findIndex((column) => column.columnId === targetColumnId);
-    const columnIdxs = columnsId.map((columnId) => columns.findIndex((c) => c.columnId === columnId));
-    setColumns(prevColumns => reorderArray(prevColumns, columnIdxs, to));
+    const to = columns.findIndex(
+      (column) => column.columnId === targetColumnId
+    );
+    const columnIdxs = columnsId.map((columnId) =>
+      columns.findIndex((c) => c.columnId === columnId)
+    );
+    setColumns((prevColumns) => reorderArray(prevColumns, columnIdxs, to));
   };
 
   const handleRowsReorder = (targetRowId: Id, rowIds: Id[]) => {
     const to = data.findIndex((row) => row._idx === targetRowId);
-    const rowsIds = rowIds.map((id) => data.findIndex(row => row._idx === id));
+    const rowsIds = rowIds.map((id) =>
+      data.findIndex((row) => row._idx === id)
+    );
     setData((prevData) => reorderArray(prevData, rowsIds, to));
   };
 
   const handleCanReorderRows = (targetRowId: Id, rowIds: Id[]): boolean => {
-    return targetRowId !== 'header';
+    return targetRowId !== "header";
   };
 
   const handleFocusLocationChanging = (location: CellLocation): boolean => {
     setFocusState(() => location);
-    return true
-  }
+    return true;
+  };
 
   return (
     <div
@@ -1043,22 +1189,23 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         const validateMap = props?.sheetOption?.validateMap || {};
         const calculateMap = props?.sheetOption?.calculateMap || {};
         // TODO: handle enterkey on cell.type=='text' still throwing error
-        if (e.key === 'ArrowDown') {
+        if (e.key === "ArrowDown") {
           const lastData = data.at(-1);
           if (lastData && focusState && lastData._idx === focusState.rowId) {
             const empty: DataRow = {
               _idx: lastData._idx + 1,
             };
-            Object.keys(lastData).slice(1).forEach((key) => {
-              empty[key] = ''
-            });
-            Object.keys(calculateMap).forEach(key => {
+            Object.keys(lastData)
+              .slice(1)
+              .forEach((key) => {
+                empty[key] = "";
+              });
+            Object.keys(calculateMap).forEach((key) => {
               if (key in calculateMap) {
-                empty[key] = calculateMap[key](
-                  empty,
-                  data,
-                  {rowId: empty._idx as Id, columnId: key},
-                ).toString();
+                empty[key] = calculateMap[key](empty, data, {
+                  rowId: empty._idx as Id,
+                  columnId: key,
+                }).toString();
               }
             });
             const newState = createCellState(empty);
@@ -1071,18 +1218,22 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
               return [...prev, empty];
             });
 
-            const newValidation: Record<string, string[]> =Object.fromEntries(Object.entries(validateMap)
-            .filter(([key, val]) => empty[key] !== undefined)
-            .map(([key, val]) => {
-              const messages = val.map(validate_ => {
-                return getValidationMessage(
-                  validate_,
-                  { rowId: empty._idx as Id, columnId: key },
-                  newData,
-                );
-              }).filter(item => item !== undefined) as string[];
-              return [key, messages];
-            }));
+            const newValidation: Record<string, string[]> = Object.fromEntries(
+              Object.entries(validateMap)
+                .filter(([key, val]) => empty[key] !== undefined)
+                .map(([key, val]) => {
+                  const messages = val
+                    .map((validate_) => {
+                      return getValidationMessage(
+                        validate_,
+                        { rowId: empty._idx as Id, columnId: key },
+                        newData
+                      );
+                    })
+                    .filter((item) => item !== undefined) as string[];
+                  return [key, messages];
+                })
+            );
 
             setValidationReport((prev) => ({
               ...prev,
@@ -1091,11 +1242,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           }
         }
         if (e.ctrlKey) {
-          switch(e.key) {
-            case 'z':
+          switch (e.key) {
+            case "z":
               handleUndoChanges();
               break;
-            case 'y':
+            case "y":
               handleRedoChanges();
               break;
           }
@@ -1107,11 +1258,12 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // console.log(cellStates, 'cellstate');
       }}
       data-testid={"spreadsheet"}
-      style={props?.style && {...props.style}}
-      className={props?.className ? props.className : ''}
+      style={props?.style && { ...props.style }}
+      className={props?.className ? props.className : ""}
     >
       <ReactGrid
-        rows={rows} columns={[...columns, ...actionColumns]}
+        rows={rows}
+        columns={[...columns, ...actionColumns]}
         onColumnResized={handleColumnResize}
         onColumnsReordered={handleColumnsReorder}
         onRowsReordered={handleRowsReorder}
