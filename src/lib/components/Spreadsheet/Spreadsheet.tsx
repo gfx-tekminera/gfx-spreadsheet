@@ -44,6 +44,8 @@ import {
 } from "./Spreadsheet.types";
 import { isRangePattern, isColonPattern } from "../../helpers";
 import { getParser, replaceVariable } from "./formulaParser";
+import useClickOutside from "../../hooks/useClickOutside";
+import "./Spreadsheet.css";
 
 const reorderArray = <T extends object>(
   arr: T[],
@@ -1183,6 +1185,15 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     return true;
   };
 
+  // Focus handler
+  const [isFocus, setIsFocus] = useState(false);
+  function handleClickOutside() {
+    setIsFocus(false);
+  }
+  function handleClickInside() {
+    setIsFocus(true);
+  }
+  const refFocus = useClickOutside(handleClickInside, handleClickOutside);
   return (
     <div
       onKeyDown={(e) => {
@@ -1259,7 +1270,14 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       }}
       data-testid={"spreadsheet"}
       style={props?.style && { ...props.style }}
-      className={props?.className ? props.className : ""}
+      className={
+        props?.className
+          ? props.className + (isFocus ? "" : " unfocus")
+          : isFocus
+          ? ""
+          : "unfocus"
+      }
+      ref={refFocus}
     >
       <ReactGrid
         rows={rows}
