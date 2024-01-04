@@ -60,6 +60,7 @@ function Basic() {
     m: ["mr", "sir"],
     f: ["ms", "mrs", "ma'am"],
   });
+
   return (
     <div>
       <Spreadsheet
@@ -67,7 +68,7 @@ function Basic() {
         style={{
           fontFamily: "monospace",
           fontWeight: "bolder",
-          color: "greenyellow",
+          color: "black",
           backgroundColor: "beige",
         }}
         ref={ref}
@@ -162,6 +163,38 @@ function Basic() {
           }}
         >
           To Showcases
+        </button>
+        <button
+          onClick={() => {
+            ref && ref.current.addRow();
+          }}
+        >
+          Add New Row
+        </button>
+        <button
+          onClick={() => {
+            ref && ref.current.removeRow();
+          }}
+        >
+          Remove Row
+        </button>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              console.log(ref.current.getData(), "get data");
+          }}
+        >
+          Get all value
+        </button>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              console.log(ref.current.getCellChanges(), "cell changes");
+          }}
+        >
+          Get change Cell
         </button>
       </div>
     </div>

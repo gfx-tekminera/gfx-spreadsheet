@@ -616,6 +616,62 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // console.log('setfocusstate', newState);
         setFocusState(newState);
       },
+      // function add row below the focusstate or at the end of the sheet
+      addRow: () => {
+        const newRow = Object.assign(
+          { _idx: data.length },
+          Object.fromEntries(
+            Object.keys(data[0])
+              .filter((key) => key !== "_idx")
+              .map((key) => [key, ""])
+          )
+        );
+        let newData = [...data];
+        if (focusState !== undefined) {
+          const rowId = focusState.rowId;
+          newRow._idx = +rowId;
+          newData.splice(+rowId + 1, 0, newRow);
+          newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+          setData(newData);
+          setCellStates((prev) => {
+            const newState = [...prev];
+            newState.splice(+rowId + 1, 0, createCellState(newRow));
+            let newCellState = newState.map((obj, i) => ({
+              ...obj,
+              _idx: i,
+            })) as CellState[];
+            return newCellState;
+          });
+        } else {
+          setData([...data, newRow]);
+          setCellStates((prev) => [...prev, createCellState(newRow)]);
+        }
+        setFocusState(undefined);
+      },
+      // create remove row on focusstate location and multiple selected rows
+      removeRow: () => {
+        if (focusState !== undefined) {
+          const rowId = focusState.rowId;
+          let newData = [...data];
+          newData.splice(+rowId, 1);
+          newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+          setData(newData);
+          setCellStates((prev) => {
+            const newState = [...prev];
+            newState.splice(+rowId, 1);
+            let newCellState = newState.map((obj, i) => ({...obj,_idx: i,})) as CellState[];
+            return newCellState;
+          });
+          setFocusState(undefined);
+        }
+      },
+      // get cellchange (already consider undo/redo)
+      getCellChanges: () => {
+        if (cellChangesIndex >= 0) {
+          return cellChanges.slice(0, cellChangesIndex + 1);
+        }
+        return [];
+      },
     }),
     [
       columns,
@@ -1181,6 +1237,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   };
 
   const handleFocusLocationChanging = (location: CellLocation): boolean => {
+    console.log(location, "focus location changing");
     setFocusState(() => location);
     return true;
   };
