@@ -46,6 +46,7 @@ import { isRangePattern, isColonPattern } from "../../helpers";
 import { getParser, replaceVariable } from "./formulaParser";
 import useClickOutside from "../../hooks/useClickOutside";
 import "./Spreadsheet.css";
+import { set } from "cypress/types/lodash";
 
 const reorderArray = <T extends object>(
   arr: T[],
@@ -659,7 +660,10 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           setCellStates((prev) => {
             const newState = [...prev];
             newState.splice(+rowId, 1);
-            let newCellState = newState.map((obj, i) => ({...obj,_idx: i,})) as CellState[];
+            let newCellState = newState.map((obj, i) => ({
+              ...obj,
+              _idx: i,
+            })) as CellState[];
             return newCellState;
           });
           setFocusState(undefined);
@@ -671,6 +675,31 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           return cellChanges.slice(0, cellChangesIndex + 1);
         }
         return [];
+      },
+      //sort data based on multiple keys
+      sortData: (sortKeys: string[]) => {
+        const _sortKeys = sortKeys.map((key) => {
+          if (key.startsWith("-")) {
+            return { key: key.slice(1), order: "desc" };
+          }
+          return { key, order: "asc" };
+        });
+        const newData = [...data];
+        newData.sort((a, b) => {
+          for (let i = 0; i < _sortKeys.length; i++) {
+            const key = _sortKeys[i].key;
+            const order = _sortKeys[i].order;
+            if ((a[key] ?? 0) < (b[key] ?? 0)) {
+              return order === "asc" ? -1 : 1;
+            }
+            if ((a[key] ?? 0) > (b[key] ?? 0)) {
+              return order === "asc" ? 1 : -1;
+            }
+          }
+          return 0;
+        });
+        setData(newData);
+        setCellStates(getCellState());
       },
     }),
     [

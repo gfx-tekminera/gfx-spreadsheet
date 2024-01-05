@@ -22,7 +22,7 @@ export const DATA = [
     additional: "",
   },
   {
-    name: "yeye",
+    name: "yeye1",
     age: 2,
     gender: "f",
     title: "",
@@ -32,7 +32,47 @@ export const DATA = [
     additional: "",
   },
   {
-    name: "hehe",
+    name: "hehe1",
+    age: 3,
+    gender: "m",
+    title: "",
+    booking: "",
+    checkin: "",
+    earlyCheckin: "",
+    additional: "",
+  },
+  {
+    name: "lele",
+    age: 4,
+    gender: "m",
+    title: "",
+    booking: "",
+    checkin: "",
+    earlyCheckin: "",
+    additional: "",
+  },
+  {
+    name: "yeye2",
+    age: 1,
+    gender: "f",
+    title: "",
+    booking: "",
+    checkin: "",
+    earlyCheckin: "",
+    additional: "",
+  },
+  {
+    name: "hehe2",
+    age: 3,
+    gender: "m",
+    title: "",
+    booking: "",
+    checkin: "",
+    earlyCheckin: "",
+    additional: "",
+  },
+  {
+    name: "lele",
     age: 3,
     gender: "m",
     title: "",
@@ -60,7 +100,13 @@ function Basic() {
     m: ["mr", "sir"],
     f: ["ms", "mrs", "ma'am"],
   });
-
+  let refSort = useRef<any>();
+  const handleClickSort = () => {
+    if (refSort.current?.value) {
+      let sortStringArray = refSort.current.value.split("&");
+      ref && ref.current && ref.current.sortData(sortStringArray);
+    }
+  }
   return (
     <div>
       <Spreadsheet
@@ -196,6 +242,14 @@ function Basic() {
         >
           Get change Cell
         </button>
+        <input
+          type="text"
+          ref={refSort}
+          // onChange={(e) => {
+          //   setSortCol(e.target.value);
+          // }}
+        />
+        <button onClick={handleClickSort}>Sort Data</button>
       </div>
     </div>
   );
