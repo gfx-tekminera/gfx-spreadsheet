@@ -107,7 +107,13 @@ function Basic() {
     getInitialData();
   }, []);
 
-  const getData = async ({ page, limit }: { page: number; limit: number }):Promise<DataRow[]> => {
+  const getData = async ({
+    page,
+    limit,
+  }: {
+    page: number;
+    limit: number;
+  }): Promise<DataRow[]> => {
     let response = await fetch(
       `http://localhost:3001/Users?_page=${page}&_limit=${limit}`
     );
@@ -127,86 +133,9 @@ function Basic() {
       let sortStringArray = refSort.current.value.split("&");
       ref && ref.current && ref.current.sortData(sortStringArray);
     }
-  }
+  };
   return (
     <div>
-      <Spreadsheet
-        className={"spreadsheet-style"}
-        style={{
-          fontFamily: "monospace",
-          fontWeight: "bolder",
-          color: "black",
-          backgroundColor: "beige",
-        }}
-        ref={ref}
-        sheetData={DATA}
-        sheetOption={{
-          includes: COLUMNS,
-          columnType: {
-            age: "number",
-            gender: "dropdown",
-            title: "dropdown",
-            booking: "date",
-            checkin: "time",
-            earlyCheckin: "checkbox",
-            additional: "s_creatable",
-          },
-          headerIcon: {
-            gender: (data) => (
-              <FilterIconComponent
-                onClick={() => console.log(`filter click with props = ${data}`)}
-              />
-            ),
-            age: (data) => (
-              <PencilIconComponent
-                onClick={() => console.log(`pencil click with props = ${data}`)}
-              />
-            ),
-            title: (data) => (
-              <PencilIconComponent
-                onClick={() => console.log(`pencil click with props = ${data}`)}
-              />
-            ),
-          },
-          valuesMap: {
-            gender: ["m", "f"],
-            title: ["mr", "ms", "mrs", "sir", "ma'am"],
-          },
-          valuesFilter: {
-            title: (option, row) => {
-              if (!row["gender"]) {
-                return true;
-              }
-              return titleRef[row["gender"].toString()].includes(
-                option.toString()
-              );
-            },
-          },
-          initialSheetStyle: [
-            [
-              ":gender-title",
-              {
-                color: "orange",
-                background: "green",
-                paddingLeft: "0",
-                // overflow: 'scroll', // will mess with 's_creatable' and 'dropdown' behavior
-                // border: { left: { color: 'blue', width: '25px', }, top: { color: 'blue', width: '25px', }, bottom: { color: 'blue', width: '25px', }, right: { color: 'blue', width: '25px', }, }, // cellstyle border are broken since v4.0.4
-              },
-            ],
-          ],
-          headerStyle: {
-            color: "violet",
-            background: "grey",
-          },
-          validateMap: {
-            age: [{ fn: () => true, message: "test" }],
-          },
-          validationCellStyle: {
-            color: "orange",
-            background: "black",
-          },
-        }}
-      />
       <div>
         <button
           onClick={() => {
@@ -358,11 +287,10 @@ function Basic() {
           infiniteScroll={{
             limit: 5,
             page: 1,
-            fetchMore: getData
+            fetchMore: getData,
           }}
         />
       )}
-
     </div>
   );
 }
