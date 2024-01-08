@@ -1,0 +1,9 @@
+div.unfocus .rg-cell-focus {
+  visibility: hidden;
+}
+div.unfocus .rg-touch-fill-handle {
+  visibility: hidden;
+}
+div.unfocus .rg-partial-area-selected-range {
+  visibility: hidden;
+}
