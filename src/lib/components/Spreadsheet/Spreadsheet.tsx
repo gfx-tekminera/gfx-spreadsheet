@@ -3,6 +3,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useEffect,
+  useRef,
 } from "react";
 import {
   ReactGrid,
@@ -45,7 +46,9 @@ import {
 import { isRangePattern, isColonPattern } from "../../helpers";
 import { getParser, replaceVariable } from "./formulaParser";
 import useClickOutside from "../../hooks/useClickOutside";
+import useOnScreen from "../../hooks/useOnScreen";
 import "./Spreadsheet.css";
+import { set } from "cypress/types/lodash";
 
 const reorderArray = <T extends object>(
   arr: T[],
@@ -616,6 +619,90 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // console.log('setfocusstate', newState);
         setFocusState(newState);
       },
+      // function add row below the focusstate or at the end of the sheet
+      addRow: () => {
+        const newRow = Object.assign(
+          { _idx: data.length },
+          Object.fromEntries(
+            Object.keys(data[0])
+              .filter((key) => key !== "_idx")
+              .map((key) => [key, ""])
+          )
+        );
+        let newData = [...data];
+        if (focusState !== undefined) {
+          const rowId = focusState.rowId;
+          newRow._idx = +rowId;
+          newData.splice(+rowId + 1, 0, newRow);
+          newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+          setData(newData);
+          setCellStates((prev) => {
+            const newState = [...prev];
+            newState.splice(+rowId + 1, 0, createCellState(newRow));
+            let newCellState = newState.map((obj, i) => ({
+              ...obj,
+              _idx: i,
+            })) as CellState[];
+            return newCellState;
+          });
+        } else {
+          setData([...data, newRow]);
+          setCellStates((prev) => [...prev, createCellState(newRow)]);
+        }
+        setFocusState(undefined);
+      },
+      // create remove row on focusstate location and multiple selected rows
+      removeRow: () => {
+        if (focusState !== undefined) {
+          const rowId = focusState.rowId;
+          let newData = [...data];
+          newData.splice(+rowId, 1);
+          newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+          setData(newData);
+          setCellStates((prev) => {
+            const newState = [...prev];
+            newState.splice(+rowId, 1);
+            let newCellState = newState.map((obj, i) => ({
+              ...obj,
+              _idx: i,
+            })) as CellState[];
+            return newCellState;
+          });
+          setFocusState(undefined);
+        }
+      },
+      // get cellchange (already consider undo/redo)
+      getCellChanges: () => {
+        if (cellChangesIndex >= 0) {
+          return cellChanges.slice(0, cellChangesIndex + 1);
+        }
+        return [];
+      },
+      //sort data based on multiple keys
+      sortData: (sortKeys: string[]) => {
+        const _sortKeys = sortKeys.map((key) => {
+          if (key.startsWith("-")) {
+            return { key: key.slice(1), order: "desc" };
+          }
+          return { key, order: "asc" };
+        });
+        const newData = [...data];
+        newData.sort((a, b) => {
+          for (let i = 0; i < _sortKeys.length; i++) {
+            const key = _sortKeys[i].key;
+            const order = _sortKeys[i].order;
+            if ((a[key] ?? 0) < (b[key] ?? 0)) {
+              return order === "asc" ? -1 : 1;
+            }
+            if ((a[key] ?? 0) > (b[key] ?? 0)) {
+              return order === "asc" ? 1 : -1;
+            }
+          }
+          return 0;
+        });
+        setData(newData);
+        setCellStates(getCellState());
+      },
     }),
     [
       columns,
@@ -1181,6 +1268,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   };
 
   const handleFocusLocationChanging = (location: CellLocation): boolean => {
+    console.log(location, "focus location changing");
     setFocusState(() => location);
     return true;
   };
@@ -1194,6 +1282,49 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     setIsFocus(true);
   }
   const refFocus = useClickOutside(handleClickInside, handleClickOutside);
+
+  // infinite scroll
+  const infiniteScrollRef = useRef<HTMLDivElement>(null);
+  const { isOnScreen, setIsOnScreen } = useOnScreen(infiniteScrollRef);
+  const [page, setPage] = useState(props?.infiniteScroll?.page || 1);
+  const [hasMore, setHasMore] = useState(true);
+  const [forceFetch, setForceFetch] = useState(0);
+  useEffect(() => {
+    const getMoreData = async () => {
+      let moreData = await props?.infiniteScroll?.fetchMore({
+        page: page,
+        limit: props?.infiniteScroll?.limit || 10,
+      });
+      let moreDataLength = moreData?.length || 0;
+      if (moreDataLength > 0) {
+        setHasMore(moreDataLength > 0);
+        let newRow = getData(moreData, props?.sheetOption);
+        data.map((row) => createCellState(row))
+        let newDataInfiniteScroll 
+        if (data.length === 1) {
+          newDataInfiniteScroll = [...newRow]
+        } else {
+          let newRow2 = newRow.map((row) => {
+            return { ...row, _idx: row._idx + data.length };
+          });
+          newDataInfiniteScroll=[...data, ...newRow2];
+        }
+        setPage((prev) => prev + 1);
+        setData(newDataInfiniteScroll);
+        setCellStates(newDataInfiniteScroll.map((row) => createCellState(row)));
+        setValidationReport(getCellValidations(newDataInfiniteScroll, props?.sheetOption));
+        if (isOnScreen) {
+          setForceFetch((prev) => prev + 1);
+        }
+      } else {
+        setHasMore(false);
+      }
+    };
+    if (isOnScreen && props?.infiniteScroll?.fetchMore && hasMore && data) {
+      getMoreData();
+    }
+  }, [isOnScreen, forceFetch]);
+
   return (
     <div
       onKeyDown={(e) => {
@@ -1301,6 +1432,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
       />
+      <div ref={infiniteScrollRef} style={{marginBottom:20}}></div>
     </div>
   );
 });
