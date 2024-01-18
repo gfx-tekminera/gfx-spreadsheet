@@ -137,19 +137,14 @@ export type SpreadSheetOption = {
   headerStyle: CellStyle;
   // cell style for validated cell
   validationCellStyle: CellStyle;
+  // scroll listener for infinite scroll
+  scrollListener: () => void;
 };
 export type SpreadSheetProps = {
   sheetData?: DataRow[];
   sheetOption?: Partial<SpreadSheetOption>;
   style?: React.CSSProperties;
   className?: string;
-  infiniteScroll?:
-    | {
-        limit?: number;
-        page?: number;
-        fetchMore: (params: { page: number; limit: number }) => Promise<DataRow[]>;
-      }
-    | undefined;
 };
 
 export type DataColumnMap = {

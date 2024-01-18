@@ -134,6 +134,8 @@ function Basic() {
       ref && ref.current && ref.current.sortData(sortStringArray);
     }
   };
+  // create useref for infinitescroll page refrence
+  const pageRef = useRef({ page: 1, hasMore: true })
   return (
     <div>
       <div>
@@ -195,9 +197,9 @@ function Basic() {
         <input
           type="text"
           ref={refSort}
-          // onChange={(e) => {
-          //   setSortCol(e.target.value);
-          // }}
+        // onChange={(e) => {
+        //   setSortCol(e.target.value);
+        // }}
         />
         <button onClick={handleClickSort}>Sort Data</button>
       </div>
@@ -213,6 +215,17 @@ function Basic() {
           ref={ref}
           sheetData={data}
           sheetOption={{
+            scrollListener: async () => {
+              if (pageRef.current?.hasMore) {
+                let newData = await getData({ page: pageRef.current?.page + 1, limit: 10 })
+                pageRef.current.page = pageRef.current?.page + 1
+                if (newData.length > 0) {
+                  ref.current.addNewData(newData)
+                } else {
+                  pageRef.current.hasMore = false
+                }
+              }
+            },
             includes: COLUMNS,
             columnType: {
               age: "number",
@@ -283,11 +296,6 @@ function Basic() {
               color: "orange",
               background: "black",
             },
-          }}
-          infiniteScroll={{
-            limit: 5,
-            page: 1,
-            fetchMore: getData,
           }}
         />
       )}

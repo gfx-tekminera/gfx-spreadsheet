@@ -703,6 +703,26 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         setData(newData);
         setCellStates(getCellState());
       },
+      // add new data to spreadsheet
+      addNewData: (newData: DataRow[]) => {
+        let newRow = getData(newData, props?.sheetOption);
+        let newDataInfiniteScroll 
+        if (data.length === 1) {
+          newDataInfiniteScroll = [...newRow]
+        } else {
+          let newRow2 = newRow.map((row) => {
+            return { ...row, _idx: row._idx + data.length };
+          });
+          newDataInfiniteScroll=[...data, ...newRow2];
+        }
+        setData(newDataInfiniteScroll);
+        setCellStates(newDataInfiniteScroll.map((row) => createCellState(row)));
+        setValidationReport(getCellValidations(newDataInfiniteScroll, props?.sheetOption));
+        if (isOnScreen) {
+          setForceFetch(pre=>pre+1);
+        }
+      }
+      
     }),
     [
       columns,
@@ -1283,48 +1303,17 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   }
   const refFocus = useClickOutside(handleClickInside, handleClickOutside);
 
+
   // infinite scroll
   const infiniteScrollRef = useRef<HTMLDivElement>(null);
   const { isOnScreen, setIsOnScreen } = useOnScreen(infiniteScrollRef);
-  const [page, setPage] = useState(props?.infiniteScroll?.page || 1);
-  const [hasMore, setHasMore] = useState(true);
   const [forceFetch, setForceFetch] = useState(0);
   useEffect(() => {
-    const getMoreData = async () => {
-      let moreData = await props?.infiniteScroll?.fetchMore({
-        page: page,
-        limit: props?.infiniteScroll?.limit || 10,
-      });
-      let moreDataLength = moreData?.length || 0;
-      if (moreDataLength > 0) {
-        setHasMore(moreDataLength > 0);
-        let newRow = getData(moreData, props?.sheetOption);
-        data.map((row) => createCellState(row))
-        let newDataInfiniteScroll 
-        if (data.length === 1) {
-          newDataInfiniteScroll = [...newRow]
-        } else {
-          let newRow2 = newRow.map((row) => {
-            return { ...row, _idx: row._idx + data.length };
-          });
-          newDataInfiniteScroll=[...data, ...newRow2];
-        }
-        setPage((prev) => prev + 1);
-        setData(newDataInfiniteScroll);
-        setCellStates(newDataInfiniteScroll.map((row) => createCellState(row)));
-        setValidationReport(getCellValidations(newDataInfiniteScroll, props?.sheetOption));
-        if (isOnScreen) {
-          setForceFetch((prev) => prev + 1);
-        }
-      } else {
-        setHasMore(false);
-      }
-    };
-    if (isOnScreen && props?.infiniteScroll?.fetchMore && hasMore && data) {
-      getMoreData();
+    if (isOnScreen && props?.sheetOption?.scrollListener && data) {
+      props?.sheetOption?.scrollListener()
     }
   }, [isOnScreen, forceFetch]);
-
+  
   return (
     <div
       onKeyDown={(e) => {
