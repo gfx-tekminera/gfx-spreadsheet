@@ -1408,6 +1408,8 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         enableColumnSelection
         enableRowSelection
         enableRangeSelection
+        stickyTopRows={1}
+        stickyLeftColumns={1}
         canReorderRows={handleCanReorderRows}
         onCellsChanged={handleChanges}
         enableFillHandle

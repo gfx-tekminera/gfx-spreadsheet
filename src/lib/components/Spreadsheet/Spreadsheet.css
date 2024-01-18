@@ -1,3 +1,9 @@
+div .rg-pane-top{
+  z-index: 1;
+}
+div .rg-pane-left{
+  z-index: 1;
+}
 div.unfocus .rg-cell-focus {
   visibility: hidden;
 }
