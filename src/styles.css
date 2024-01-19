@@ -310,3 +310,18 @@
     top: 50%;
     left: 50%; }
 
+    .reactgrid-content .rg-pane-top{
+      z-index: 1;
+    }
+    .reactgrid-content .rg-pane-left{
+      z-index: 1;
+    }
+    .spreadsheet-style.unfocus .rg-cell-focus {
+      visibility: hidden;
+    }
+    .spreadsheet-style.unfocus .rg-touch-fill-handle {
+      visibility: hidden;
+    }
+    .spreadsheet-style.unfocus .rg-partial-area-selected-range {
+      visibility: hidden;
+    }

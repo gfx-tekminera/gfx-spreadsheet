@@ -1,3 +1,4 @@
+import React from "react";
 import { ReactComponent as FilterIcon } from "./filter.svg";
 import { HeaderIconComponentProps } from "../lib/components/Spreadsheet/templates";
 

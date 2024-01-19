@@ -47,7 +47,6 @@ import { isRangePattern, isColonPattern } from "../../helpers";
 import { getParser, replaceVariable } from "./formulaParser";
 import useClickOutside from "../../hooks/useClickOutside";
 import useOnScreen from "../../hooks/useOnScreen";
-import "./Spreadsheet.css";
 import { set } from "cypress/types/lodash";
 
 const reorderArray = <T extends object>(

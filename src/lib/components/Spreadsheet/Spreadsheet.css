@@ -1,15 +1,15 @@
-div .rg-pane-top{
+.reactgrid-content .rg-pane-top{
   z-index: 1;
 }
-div .rg-pane-left{
+.reactgrid-content .rg-pane-left{
   z-index: 1;
 }
-div.unfocus .rg-cell-focus {
+.spreadsheet-style.unfocus .rg-cell-focus {
   visibility: hidden;
 }
-div.unfocus .rg-touch-fill-handle {
+.spreadsheet-style.unfocus .rg-touch-fill-handle {
   visibility: hidden;
 }
-div.unfocus .rg-partial-area-selected-range {
+.spreadsheet-style.unfocus .rg-partial-area-selected-range {
   visibility: hidden;
 }

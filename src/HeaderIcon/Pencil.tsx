@@ -1,3 +1,4 @@
+import React from "react";
 import { ReactComponent as PencilIcon } from "./pencil.svg";
 import { HeaderIconComponentProps } from "../lib/components/Spreadsheet/templates";
 
