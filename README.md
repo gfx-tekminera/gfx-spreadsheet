@@ -78,6 +78,12 @@ export type SpreadSheetProps = {
     // map column to function (optionItem, row) => callback
     // function will be used as callback in Array(valuesMap[dataKey]).filter(callback)
     valuesFilter?: Record<keyof DataRow, ValuesFilter>;
+
+    // add icon to spreadsheet header
+    headerIcon?: { [key: string]: React.FC<HeaderIconComponentProps> }
+
+    // Function that handles the scroll event in the Spreadsheet component. Run the callback when reach the bottom row.
+    scrollListener?: () => void;
   };
 };
 ```
@@ -299,6 +305,53 @@ export type SpreadSheetProps = {
 
   - `headerStyle`, setting [CellStyle](https://reactgrid.com/docs/4.0/7-api/0-interfaces/7-cell-style/) for header cells.
 
+  - `headerIcon`, add icon specific column in spreadsheet header. Each property is a function that returns a React component with event handler for each icon component.
+    ```tsx
+    headerIcon: {
+              gender: (data) => (
+                <FilterIconComponent
+                  onClick={() =>
+                    console.log(`filter click with props = ${data}`)
+                  }
+                />
+              ),
+              age: (data) => (
+                <PencilIconComponent
+                  onClick={() =>
+                    console.log(`pencil click with props = ${data}`)
+                  }
+                />
+              )}
+    ```
+
+  - `scrollListener`, Function that handles the scroll event in the Spreadsheet component. It fetches new data from the server and adds it to the existing data in the spreadsheet.
+    ```tsx
+    // create useref for infinitescroll page refrence
+    const pageRef = useRef({ page: 1, hasMore: true })
+    const getData = async ({ page,limit}: {
+      page: number;
+      limit: number;
+    }): Promise<DataRow[]> => {
+      let response = await fetch(
+        `http://localhost:3001/Users?_page=${page}&_limit=${limit}`
+      );
+      let data = await response.json();
+      return data;
+    };
+
+    sheetOption={{scrollListener: async () => {
+      if (pageRef.current?.hasMore) {
+        let newData = await getData({ page: pageRef.current?.page + 1, limit: 10 })
+        pageRef.current.page = pageRef.current?.page + 1
+        if (newData.length > 0) {
+          ref.current.addNewData(newData)
+        } else {
+          pageRef.current.hasMore = false
+        }
+      }
+    }}}
+    ```
+
 
 ## Accessing spreadsheet state
 If reference is provided, spreadsheet state can be accessed with these exposed methods.
@@ -318,6 +371,17 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   returns `sheetOption.columnSize` shorter of `getSheetOption().columnSize`.
 - `ref.current.getStyleState()`
   returns CellStyle mapping for each cell
+- `ref.current.addRow()`
+  Adds a new row to the spreadsheet. This function creates a new row object with empty values for each column, and adds it to the data array. If a focus state is provided, the new row will be inserted below the focused row.
+- `ref.current.removeRow()`
+  Removes a row from the spreadsheet. If a row is currently focused, the function will remove that row from the data array and update the cell states accordingly.
+- `ref.current.getCellChanges()`
+  Returns an array of cell changes.
+- `ref.current.sortData(sortKeys: string[])`
+  Sorts the data in the spreadsheet based on the given sortKeys (array of string). Each string can start with a "-" to indicate descending order. (ex:["name","-age"]).
+- `ref.current.addNewData(newData: DataRow[])`
+  Adds new data to the spreadsheet, the new data follow the DataRow[] format.
+
 
 
 ## Cell Formula

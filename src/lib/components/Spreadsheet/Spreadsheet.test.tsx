@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import { queryHelpers, getByText } from '@testing-library/dom';
-
+import 'intersection-observer';
 import Spreadsheet from './Spreadsheet';
 
 export const queryAllCellByColIdx = queryHelpers.queryAllByAttribute.bind(null, 'data-cell-colidx');
