@@ -42,12 +42,14 @@ import {
   StyleState,
   SpreadsheetCellStyle,
   StyleStateNote,
+  RowChange
 } from "./Spreadsheet.types";
 import { isRangePattern, isColonPattern } from "../../helpers";
 import { getParser, replaceVariable } from "./formulaParser";
 import useClickOutside from "../../hooks/useClickOutside";
 import useOnScreen from "../../hooks/useOnScreen";
 import { set } from "cypress/types/lodash";
+import { v4 as uuid } from 'uuid';
 
 const reorderArray = <T extends object>(
   arr: T[],
@@ -278,6 +280,9 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     useState<DataColumnHeaderMap>(getDataColumnHeaderMap());
   const [cellChanges, setCellChanges] = useState<
     CellChange<SpreadSheetCellTypes>[][]
+  >(() => []);
+  const [rowChanges, setRowChanges] = useState<
+    RowChange[]
   >(() => []);
   const [cellChangesIndex, setCellChangesIndex] = useState(() => -1);
 
@@ -628,6 +633,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
               .map((key) => [key, ""])
           )
         );
+        newRow.uuid=uuid()
         let newData = [...data];
         if (focusState !== undefined) {
           const rowId = focusState.rowId;
@@ -648,6 +654,16 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           setData([...data, newRow]);
           setCellStates((prev) => [...prev, createCellState(newRow)]);
         }
+        setCellChanges([
+          ...cellChanges.slice(0, cellChangesIndex + 1),
+          {} as CellChange<SpreadSheetCellTypes>[],
+        ]);
+        setCellChangesIndex(cellChangesIndex + 1);
+        setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {uuid: newRow.uuid,
+          rowId: newRow._idx +1,
+          data: newRow,
+          prevData: {},
+          changeType: "add"}]);
         setFocusState(undefined);
       },
       // create remove row on focusstate location and multiple selected rows
@@ -667,13 +683,23 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             })) as CellState[];
             return newCellState;
           });
+          setCellChanges([
+            ...cellChanges.slice(0, cellChangesIndex + 1),
+            {} as CellChange<SpreadSheetCellTypes>[],
+          ]);
+          setCellChangesIndex(cellChangesIndex + 1);
+          setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {uuid: String(data[rowId as number].uuid),
+            rowId: rowId as number,
+            data: {},
+            prevData: data[rowId as number],
+            changeType: "remove"}]);
           setFocusState(undefined);
         }
       },
       // get cellchange (already consider undo/redo)
       getCellChanges: () => {
         if (cellChangesIndex >= 0) {
-          return cellChanges.slice(0, cellChangesIndex + 1);
+          return rowChanges.slice(0, cellChangesIndex + 1);
         }
         return [];
       },
@@ -1157,6 +1183,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         dataChanges,
       ]);
       setCellChangesIndex(cellChangesIndex + 1);
+      setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {uuid: String(data[changes[0].rowId as number].uuid),
+        rowId: changes[0].rowId as number,
+        data: {[changes[0].columnId]:changes[0].newCell},
+        prevData: {[changes[0].columnId]:changes[0].previousCell},
+        changeType: "update"}]);
       return updated;
     }
     return prevData;
@@ -1338,6 +1369,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
                 }).toString();
               }
             });
+            empty.uuid=uuid()
             const newState = createCellState(empty);
             const newData: DataRow[] = [...data, empty];
 
@@ -1369,6 +1401,16 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
               ...prev,
               [empty._idx as Id]: newValidation,
             }));
+            setCellChanges([
+              ...cellChanges.slice(0, cellChangesIndex + 1),
+              {} as CellChange<SpreadSheetCellTypes>[],
+            ]);
+            setCellChangesIndex(cellChangesIndex + 1);
+            setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {uuid: empty.uuid,
+              rowId: empty._idx as number,
+              data: empty,
+              prevData: {},
+              changeType: "add"}]);
           }
         }
         if (e.ctrlKey) {

@@ -12,9 +12,9 @@ export const queryAllCellByColIdx = queryHelpers.queryAllByAttribute.bind(null, 
 export const queryAllCellByRowIdx = queryHelpers.queryAllByAttribute.bind(null, 'data-cell-rowidx');
 
 const TEST_DATA: Record<string, any>[] = [
-  { name: 'data-name1', age: 1, },
-  { name: 'data-name2', age: 2, },
-  { name: 'data-name3', age: 3, },
+  { name: 'data-name1', age: 1, uuid: 'uuid1'},
+  { name: 'data-name2', age: 2, uuid: 'uuid2'},
+  { name: 'data-name3', age: 3, uuid: 'uuid3'},
 ];
 
 describe('Render data', () => {

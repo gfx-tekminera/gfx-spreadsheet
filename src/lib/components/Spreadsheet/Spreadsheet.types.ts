@@ -167,3 +167,11 @@ export type ValidationReport = Record<
   Row["rowId"],
   Record<keyof DataRow, string[]>
 >;
+
+export type RowChange = {
+  uuid: string;
+  rowId: Number;
+  data: any;
+  prevData: any;
+  changeType: "add" | "update" | "remove";
+}
