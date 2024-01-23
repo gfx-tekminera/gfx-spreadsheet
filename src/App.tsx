@@ -220,6 +220,15 @@ function Basic() {
         >
           Redo
         </button>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              ref.current.duplicateRow()
+          }}
+        >
+          Duplicate Row
+        </button>
       </div>
       {data && (
         <Spreadsheet

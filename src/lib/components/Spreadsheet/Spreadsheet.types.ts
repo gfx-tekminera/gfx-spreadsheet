@@ -169,9 +169,9 @@ export type ValidationReport = Record<
 >;
 
 export type RowChange = {
-  uuid: string;
-  rowId: Number;
+  uuid: string | Array<string>;
+  rowId: Number | Array<Number>;
   data: any;
   prevData: any;
-  changeType: "add" | "update" | "remove";
+  changeType: "add" | "update" | "remove" | "duplicate";
 }

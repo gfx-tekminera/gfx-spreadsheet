@@ -752,8 +752,47 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       // undo changes
       undo: () => handleUndoChanges(),
       // redo changes
-      redo: () => handleRedoChanges()
-      
+      redo: () => handleRedoChanges(),
+      // duplicate row
+      duplicateRow: () => {
+        if (focusState !== undefined) {
+          const rowId = focusState.rowId;
+          const newRow = Object.assign(
+            { _idx: rowId as number },
+            Object.fromEntries(
+              Object.keys(data[0])
+                .filter((key) => key !== "_idx")
+                .map((key) => [key, data[rowId as number][key]])
+            )
+          );
+          newRow.uuid=uuid()
+          let newData = [...data];
+          newData.splice(+rowId + 1, 0, newRow);
+          newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+          setData(newData);
+          setCellStates((prev) => {
+            const newState = [...prev];
+            newState.splice(+rowId + 1, 0, createCellState(newRow));
+            let newCellState = newState.map((obj, i) => ({
+              ...obj,
+              _idx: i,
+            })) as CellState[];
+            return newCellState;
+          });
+          setValidationReport(getCellValidations(newData, props?.sheetOption));
+          setCellChanges([
+            ...cellChanges.slice(0, cellChangesIndex + 1),
+            {} as CellChange<SpreadSheetCellTypes>[],
+          ]);
+          setCellChangesIndex(cellChangesIndex + 1);
+          setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {uuid: newRow.uuid,
+            rowId: newRow._idx +1,
+            data: newRow,
+            prevData: {},
+            changeType: "duplicate"}]);
+          setFocusState(undefined);
+        }
+      },
     }),
     [
       columns,
@@ -1189,10 +1228,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         dataChanges,
       ]);
       setCellChangesIndex(cellChangesIndex + 1);
-      setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {uuid: String(data[changes[0].rowId as number].uuid),
-        rowId: changes[0].rowId as number,
-        data: {[changes[0].columnId]:changes[0].newCell},
-        prevData: {[changes[0].columnId]:changes[0].previousCell},
+      setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {
+        uuid: changes.map(el=>String(data[el.rowId as number].uuid)) ,
+        rowId: changes.map(el=>el.rowId as number),
+        data: changes.map(el=>{return({[el.columnId]:el.newCell})}),
+        prevData: changes.map(el=>{return({[el.columnId]:el.previousCell})}),
         changeType: "update"}]);
       return updated;
     }
@@ -1267,6 +1307,8 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         undoAddRow()
       } else if (rowChanges[cellChangesIndex].changeType === "remove"){
         undoRemoveRow()
+      } else if (rowChanges[cellChangesIndex].changeType === "duplicate"){
+        undoAddRow() // same as add row
       }
       else{
         setData((prevData) =>
@@ -1286,6 +1328,8 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         redoAddRow()
       } else if (rowChanges[cellChangesIndex+1].changeType === "remove"){
         redoRemoveRow()
+      } else if (rowChanges[cellChangesIndex+1].changeType === "duplicate"){
+        redoAddRow() // same as add row
       }
       else{
       setData((prevData) =>
