@@ -325,3 +325,6 @@
     .spreadsheet-style.unfocus .rg-partial-area-selected-range {
       visibility: hidden;
     }
+    .rg-cell.rg-dropdown-cell.open{
+      z-index: 1;
+    }

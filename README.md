@@ -385,6 +385,9 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   To revert the spreadsheet to its previous state, you can use the Undo command instead of the Ctrl + Z shortcut.
 - `ref.current.redo()`
   To restore the spreadsheet to its more recent state, you can use the Redo command instead of the Ctrl + Y shortcut.
+- `ref.current.duplicateRow()`
+  Make a duplicate of the focused row and insert it below.
+  
 
 
 
