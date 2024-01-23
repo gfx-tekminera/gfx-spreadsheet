@@ -748,7 +748,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         if (isOnScreen) {
           setForceFetch(pre=>pre+1);
         }
-      }
+      },
+      // undo changes
+      undo: () => handleUndoChanges(),
+      // redo changes
+      redo: () => handleRedoChanges()
       
     }),
     [

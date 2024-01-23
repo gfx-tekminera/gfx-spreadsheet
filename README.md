@@ -381,6 +381,10 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   Sorts the data in the spreadsheet based on the given sortKeys (array of string). Each string can start with a "-" to indicate descending order. (ex:["name","-age"]).
 - `ref.current.addNewData(newData: DataRow[])`
   Adds new data to the spreadsheet, the new data follow the DataRow[] format.
+- `ref.current.undo()`
+  To revert the spreadsheet to its previous state, you can use the Undo command instead of the Ctrl + Z shortcut.
+- `ref.current.redo()`
+  To restore the spreadsheet to its more recent state, you can use the Redo command instead of the Ctrl + Y shortcut.
 
 
 

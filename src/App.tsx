@@ -202,6 +202,24 @@ function Basic() {
         // }}
         />
         <button onClick={handleClickSort}>Sort Data</button>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              ref.current.undo()
+          }}
+        >
+          Undo
+        </button>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              ref.current.redo()
+          }}
+        >
+          Redo
+        </button>
       </div>
       {data && (
         <Spreadsheet
