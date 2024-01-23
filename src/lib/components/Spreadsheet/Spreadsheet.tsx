@@ -650,9 +650,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             })) as CellState[];
             return newCellState;
           });
+          setValidationReport(getCellValidations(newData, props?.sheetOption));
         } else {
           setData([...data, newRow]);
           setCellStates((prev) => [...prev, createCellState(newRow)]);
+          setValidationReport(getCellValidations([...data, newRow], props?.sheetOption));
         }
         setCellChanges([
           ...cellChanges.slice(0, cellChangesIndex + 1),
@@ -692,7 +694,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             rowId: rowId as number,
             data: {},
             prevData: data[rowId as number],
-            changeType: "remove"}]);
+            changeType: "remove"}]);                      
           setFocusState(undefined);
         }
       },
@@ -1257,9 +1259,16 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   const handleUndoChanges = () => {
     console.log(cellChangesIndex, "undo changesindex");
     if (cellChangesIndex >= 0) {
-      setData((prevData) =>
-        undoChanges(cellChanges[cellChangesIndex], prevData, props.sheetOption)
-      );
+      if (rowChanges[cellChangesIndex].changeType === "add") {
+        undoAddRow()
+      } else if (rowChanges[cellChangesIndex].changeType === "remove"){
+        undoRemoveRow()
+      }
+      else{
+        setData((prevData) =>
+          undoChanges(cellChanges[cellChangesIndex], prevData, props.sheetOption)
+        );
+      }
     }
   };
   const handleRedoChanges = () => {
@@ -1269,6 +1278,12 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       cellChanges.length
     );
     if (cellChangesIndex + 1 <= cellChanges.length - 1) {
+      if (rowChanges[cellChangesIndex+1].changeType === "add") {
+        redoAddRow()
+      } else if (rowChanges[cellChangesIndex+1].changeType === "remove"){
+        redoRemoveRow()
+      }
+      else{
       setData((prevData) =>
         redoChanges(
           cellChanges[cellChangesIndex + 1],
@@ -1276,9 +1291,95 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           props.sheetOption
         )
       );
+        }
     }
   };
-
+  const undoAddRow = () => {
+    const rowId = rowChanges[cellChangesIndex].rowId;
+    let newData = [...data];
+    newData.splice(+rowId, 1);
+    newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+    setData(newData);
+    setCellStates((prev) => {
+      const newState = [...prev];
+      newState.splice(+rowId, 1);
+      let newCellState = newState.map((obj, i) => ({
+        ...obj,
+        _idx: i,
+      })) as CellState[];
+      return newCellState;
+    });
+    setCellChangesIndex(cellChangesIndex - 1);
+  }
+  const redoAddRow = () => {
+    let newRow = rowChanges[cellChangesIndex+1].data
+    let newData = [...data];
+    if (rowChanges[cellChangesIndex+1].rowId !== data.length+1) {
+      const rowId = rowChanges[cellChangesIndex+1].rowId;
+      newRow._idx = +rowId ;
+      newData.splice(+rowId, 0, newRow);
+      newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+      setData(newData);
+      setCellStates((prev) => {
+        const newState = [...prev];
+        newState.splice(+rowId, 0, createCellState(newRow));
+        let newCellState = newState.map((obj, i) => ({
+          ...obj,
+          _idx: i,
+        })) as CellState[];
+        return newCellState;
+      });
+      setValidationReport(getCellValidations(newData, props?.sheetOption));
+    } else {
+      setData([...data, newRow]);
+      setCellStates((prev) => [...prev, createCellState(newRow)]);
+      setValidationReport(getCellValidations([...data, newRow], props?.sheetOption));
+    }
+    setCellChangesIndex(cellChangesIndex + 1);
+  }
+  const undoRemoveRow = () => {
+    let newRow = rowChanges[cellChangesIndex].prevData
+    let newData = [...data];
+    if (rowChanges[cellChangesIndex].rowId !== data.length+1) {
+      const rowId = rowChanges[cellChangesIndex].rowId;
+      newRow._idx = +rowId;
+      newData.splice(+rowId , 0, newRow);
+      newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+      setData(newData);
+      setCellStates((prev) => {
+        const newState = [...prev];
+        newState.splice(+rowId , 0, createCellState(newRow));
+        let newCellState = newState.map((obj, i) => ({
+          ...obj,
+          _idx: i,
+        })) as CellState[];
+        return newCellState;
+      });
+      setValidationReport(getCellValidations(newData, props?.sheetOption));
+    } else {
+      setData([...data, newRow]);
+      setCellStates((prev) => [...prev, createCellState(newRow)]);
+      setValidationReport(getCellValidations([...data, newRow], props?.sheetOption));
+    }
+    setCellChangesIndex(cellChangesIndex - 1);
+  }
+  const redoRemoveRow = () => {
+    const rowId = rowChanges[cellChangesIndex+1].rowId;
+    let newData = [...data];
+    newData.splice(+rowId, 1);
+    newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
+    setData(newData);
+    setCellStates((prev) => {
+      const newState = [...prev];
+      newState.splice(+rowId, 1);
+      let newCellState = newState.map((obj, i) => ({
+        ...obj,
+        _idx: i,
+      })) as CellState[];
+      return newCellState;
+    });
+    setCellChangesIndex(cellChangesIndex + 1);
+  }
   const rows = getRows(
     data,
     columns.map((c) => c.columnId as DataColumnId),
