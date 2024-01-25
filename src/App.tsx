@@ -229,6 +229,15 @@ function Basic() {
         >
           Duplicate Row
         </button>
+        <button
+          onClick={() => {
+            ref &&
+              ref.current &&
+              ref.current.cancelEdit()
+          }}
+        >
+          Cancel Edit
+        </button>
       </div>
       {data && (
         <Spreadsheet

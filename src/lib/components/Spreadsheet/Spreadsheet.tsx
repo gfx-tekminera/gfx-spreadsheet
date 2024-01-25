@@ -804,6 +804,18 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           setFocusState(undefined);
         }
       },
+      // back to initial state, but perserve changes state
+      cancelEdit: () => {
+        setData(getData(props?.sheetData, props?.sheetOption));
+        setCellStates(getCellState());
+        setDataColumnHeaderMap(getDataColumnHeaderMap());
+        setValidationReport(getCellValidations(data, props?.sheetOption));
+        setCellChangesIndex(-1);
+        setColumns(getColumns());
+        setColumnValuesMap((prev) => getColumnValuesMap());
+        setStyleState(() => createStyleState());
+        setIsOnScreen(true);
+      },
     }),
     [
       columns,
