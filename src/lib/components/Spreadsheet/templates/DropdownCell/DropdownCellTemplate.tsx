@@ -108,7 +108,6 @@ const DropdownInput: FC<DIProps> = ({onCellChanged, cell}) => {
       selectRef.current.focus();
       setInputValue(cell.inputValue);
     }
-    console.log(cell,'cell');
   }, [cell.isOpen, cell.inputValue]);
 
   return <div

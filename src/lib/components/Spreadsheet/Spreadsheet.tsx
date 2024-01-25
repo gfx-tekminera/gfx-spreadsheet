@@ -1324,7 +1324,6 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     );
   };
   const handleUndoChanges = () => {
-    console.log(cellChangesIndex, "undo changesindex");
     if (cellChangesIndex >= 0) {
       if (rowChanges[cellChangesIndex].changeType === "add") {
         undoAddRow()
@@ -1341,11 +1340,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     }
   };
   const handleRedoChanges = () => {
-    console.log(
-      cellChangesIndex,
-      "redo changesindex <= cellcahngeslength",
-      cellChanges.length
-    );
+
     if (cellChangesIndex + 1 <= cellChanges.length - 1) {
       if (rowChanges[cellChangesIndex+1].changeType === "add") {
         redoAddRow()
@@ -1490,7 +1485,6 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
   };
 
   const handleFocusLocationChanging = (location: CellLocation): boolean => {
-    console.log(location, "focus location changing");
     setFocusState(() => location);
     return true;
   };
