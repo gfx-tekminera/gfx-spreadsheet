@@ -671,30 +671,41 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       // create remove row on focusstate location and multiple selected rows
       removeRow: () => {
         if (focusState !== undefined) {
-          const rowId = focusState.rowId;
+          const rowId = getSelectedRowIds();
           let newData = [...data];
-          newData.splice(+rowId, 1);
+          for (const id of rowId) {
+            newData.splice(+id, 1);
+          }
           newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
           setData(newData);
           setCellStates((prev) => {
             const newState = [...prev];
-            newState.splice(+rowId, 1);
+            for (const id of rowId) {
+              newState.splice(+rowId, 1);
+            }
             let newCellState = newState.map((obj, i) => ({
               ...obj,
               _idx: i,
             })) as CellState[];
             return newCellState;
           });
+          let arrCellChanges = rowId.map(() => {return({})}) as CellChange<SpreadSheetCellTypes>[][]
+          let arrRowChange = rowId.map((id) => {
+            return (
+              {
+                uuid: String(data[id as number].uuid),
+                rowId: id,
+                data: {},
+                prevData: data[id as number],
+                changeType: "remove"
+              })
+          }) as RowChange[];
           setCellChanges([
             ...cellChanges.slice(0, cellChangesIndex + 1),
-            {} as CellChange<SpreadSheetCellTypes>[],
+            ...arrCellChanges,
           ]);
-          setCellChangesIndex(cellChangesIndex + 1);
-          setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), {uuid: String(data[rowId as number].uuid),
-            rowId: rowId as number,
-            data: {},
-            prevData: data[rowId as number],
-            changeType: "remove"}]);                      
+          setCellChangesIndex(cellChangesIndex + rowId.length);
+          setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), ...arrRowChange]);              
           setFocusState(undefined);
         }
       },
@@ -1492,7 +1503,16 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
       props?.sheetOption?.scrollListener()
     }
   }, [isOnScreen, forceFetch]);
-  
+
+  const getSelectedRowIds = (): Number[] => {
+    const selectedRanges = refReactGrid.current?.state.selectedRanges;
+    if (!selectedRanges || selectedRanges.length == 0) {
+      return [];
+    }
+    let rowId = selectedRanges.map((el) => el.rows.map((row)=>row.rowId));
+    return rowId.flat(Infinity).sort().reverse() as Number[] ;
+  }
+  const refReactGrid = useRef<ReactGrid>(null)
   return (
     <div
       onKeyDown={(e) => {
@@ -1612,6 +1632,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // set focusLocation from focusState
         // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
+        ref={refReactGrid}
       />
       <div ref={infiniteScrollRef} style={{marginBottom:20}}></div>
     </div>
