@@ -116,7 +116,7 @@ const DropdownInput: FC<DIProps> = ({onCellChanged, cell}) => {
   >
     <Select
       {...(cell.inputValue && {
-        inputValue,
+        inputValue:undefined,
         defaultInputValue: inputValue,
         onInputChange: handleInputValueChange,
       })}
