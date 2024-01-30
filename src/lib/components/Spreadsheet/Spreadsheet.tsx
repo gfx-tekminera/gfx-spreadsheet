@@ -666,7 +666,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           data: newRow,
           prevData: {},
           changeType: "add"}]);
-        setFocusState(undefined);
+        // setFocusState(undefined);
       },
       // create remove row on focusstate location and multiple selected rows
       removeRow: () => {
@@ -706,7 +706,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           ]);
           setCellChangesIndex(cellChangesIndex + rowId.length);
           setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), ...arrRowChange]);              
-          setFocusState(undefined);
+          // setFocusState(undefined);
         }
       },
       // get cellchange (already consider undo/redo)
@@ -801,7 +801,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             data: newRow,
             prevData: {},
             changeType: "duplicate"}]);
-          setFocusState(undefined);
+          // setFocusState(undefined);
         }
       },
       // back to initial state, but perserve changes state
@@ -1074,12 +1074,12 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             : columnsOrder[_idx].toString(),
           icon: props?.sheetOption?.headerIcon
             ? props?.sheetOption?.headerIcon[columnsOrder[_idx].toString()] ||
-              function () {
-                return;
-              }
-            : function () {
-                return;
-              },
+              (() => {})
+            : () => {},
+          headerTooltipText: props?.sheetOption?.headerTooltipText
+            ? props?.sheetOption?.headerTooltipText[columnsOrder[_idx].toString()] || ""
+            : "",
+          headerTooltipStyle: props?.sheetOption?.headerTooltipStyle || {},
           style: getHeaderStyle(), // headerStyle
         })),
         ...actionColumns.map((col) => ({

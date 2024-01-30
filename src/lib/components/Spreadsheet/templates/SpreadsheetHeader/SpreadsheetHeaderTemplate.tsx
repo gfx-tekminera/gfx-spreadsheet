@@ -11,6 +11,7 @@ import {
   Uncertain,
   UncertainCompatible,
 } from "@silevis/reactgrid";
+import TooltipText from "../../../TooltipText/TooltipText";
 // import './header-cell-style.css';
 export type HeaderIconComponentProps = {
   onClick: (e: React.MouseEvent) => any;
@@ -21,6 +22,8 @@ export interface SpreadsheetHeaderCell extends Cell {
   text?: string;
   dataKey: string;
   icon: React.FC;
+  headerTooltipText: string;
+  headerTooltipStyle: React.CSSProperties;
 }
 
 class SpreadsheetHeaderTemplate implements CellTemplate {
@@ -38,7 +41,9 @@ class SpreadsheetHeaderTemplate implements CellTemplate {
     const dataKey = getCellProperty(uncertainCell, "dataKey", "string");
     const icon = getCellProperty(uncertainCell, "icon", "function");
     const value = parseFloat(text);
-    return { ...uncertainCell, text, icon, dataKey, value };
+    const headerTooltipText = getCellProperty(uncertainCell, "headerTooltipText", "string");
+    const headerTooltipStyle = getCellProperty(uncertainCell, "headerTooltipStyle", "object");
+    return { ...uncertainCell, text, icon, dataKey, value, headerTooltipText, headerTooltipStyle };
   }
 
   isFocusable(cell: Compatible<SpreadsheetHeaderCell>): boolean {
@@ -54,8 +59,8 @@ class SpreadsheetHeaderTemplate implements CellTemplate {
     ) => void
   ): React.ReactNode {
     if (!isInEditMode) {
-      return (
-        <div style={{ display: "flex", justifyContent: "space-between", width:"100%" }}>
+      const headerCell = (
+        <div className="header-container" style={{ display: "flex", justifyContent: "space-between", width:"100%", alignItems: 'center' }}>
           <div
             style={{
               flexGrow:1,
@@ -67,6 +72,11 @@ class SpreadsheetHeaderTemplate implements CellTemplate {
           {/* passing props for onclick header icon */}
           {cell.icon(cell.text)}
         </div>
+      )
+      return (
+        <TooltipText text={cell.headerTooltipText} style={cell.headerTooltipStyle}>
+          {headerCell}
+        </TooltipText>
       );
     }
 

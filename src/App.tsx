@@ -295,6 +295,14 @@ function Basic() {
                 />
               ),
             },
+            headerTooltipText: {
+              name: "person name tooltip, Lorem ipsum dolor sit amet.",
+              additional: "additional tooltip, Lorem ipsum dolor sit amet consectetur adipisicing elit. Architecto, nostrum?",
+              gender:"gender tooltip",
+            },
+            headerTooltipStyle: {
+              color: "orange",
+            },
             valuesMap: {
               gender: ["m", "f"],
               title: ["mr", "ms", "mrs", "sir", "ma'am"],

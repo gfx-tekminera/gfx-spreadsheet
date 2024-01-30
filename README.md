@@ -351,6 +351,22 @@ export type SpreadSheetProps = {
       }
     }}}
     ```
+  - `headerTooltipText`, An object that maps column names to tooltip text when hover the header.
+    ```tsx
+    headerTooltipText: {
+      name: "person name tooltip, Lorem ipsum dolor sit amet.",
+      additional: "additional tooltip, Lorem ipsum dolor sit amet consectetur adipisicing elit. Architecto, nostrum?",
+      gender:"gender tooltip",
+    }
+    ```
+  - `headerTooltipStyle`, setting style of tooltip text pop up when hover the header cells. `React.CSSProperties`
+    ```tsx
+    headerTooltipStyle: {
+      color: "orange",
+      backgroound: "black",
+      top: "100%",
+    }
+    ```
 
 
 ## Accessing spreadsheet state

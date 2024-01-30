@@ -139,6 +139,10 @@ export type SpreadSheetOption = {
   validationCellStyle: CellStyle;
   // scroll listener for infinite scroll
   scrollListener: () => void;
+  // header tooltip
+  headerTooltipText: Record<keyof DataRow, string>;
+  // header tooltip style
+  headerTooltipStyle: React.CSSProperties;
 };
 export type SpreadSheetProps = {
   sheetData?: DataRow[];
