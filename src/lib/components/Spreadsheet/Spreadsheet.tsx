@@ -838,12 +838,31 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         setData(getData(props?.sheetData, props?.sheetOption));
         setCellStates(getCellState());
         setDataColumnHeaderMap(getDataColumnHeaderMap());
-        setValidationReport(getCellValidations(data, props?.sheetOption));
+        setValidationReport(getCellValidations(props?.sheetData, props?.sheetOption));
         setCellChangesIndex(-1);
         setColumns(getColumns());
         setColumnValuesMap((prev) => getColumnValuesMap());
         setStyleState(() => createStyleState());
         setIsOnScreen(true);
+        setFocusState(undefined);
+        let filteredRowChanges = [];
+        let filteredCellChanges = [];
+        for (let i = 0; i < rowChanges.length; i++) {
+          let rowId = rowChanges[i].rowId;
+          if (Array.isArray(rowId)) {
+            if (Number(rowId[0]) < (props?.sheetData?.length ?? 0)) {
+              filteredRowChanges.push(rowChanges[i]);
+              filteredCellChanges.push(cellChanges[i]);
+            }
+          } else {
+            if (Number(rowId) < (props?.sheetData?.length ?? 0)) {
+              filteredRowChanges.push(rowChanges[i]);
+              filteredCellChanges.push(cellChanges[i]);
+            }
+          }
+        }
+        setRowChanges(filteredRowChanges);
+        setCellChanges(filteredCellChanges);
       },
     }),
     [

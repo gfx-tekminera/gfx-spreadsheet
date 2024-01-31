@@ -231,6 +231,10 @@ function Basic() {
         </button>
         <button
           onClick={() => {
+            if (pageRef.current?.page ) {
+              pageRef.current.page = 1
+              pageRef.current.hasMore = true
+            }
             ref &&
               ref.current &&
               ref.current.cancelEdit()
