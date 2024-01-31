@@ -84,6 +84,12 @@ export type SpreadSheetProps = {
 
     // Function that handles the scroll event in the Spreadsheet component. Run the callback when reach the bottom row.
     scrollListener?: () => void;
+
+    // An object that maps column names to tooltip text when hover the header
+    headerTooltipText?: Record<keyof DataRow, string>
+
+    // setting style of tooltip text pop up when hover the header cells
+    headerTooltipStyle?: React.CSSProperties
   };
 };
 ```
@@ -403,6 +409,9 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   To restore the spreadsheet to its more recent state, you can use the Redo command instead of the Ctrl + Y shortcut.
 - `ref.current.duplicateRow()`
   Make a duplicate of the focused row and insert it below.
+- `ref.current.cancelEdit()`
+  Reset the spreadsheet to its original state, but perserve changes state (can redo all change)
+
   
 
 
