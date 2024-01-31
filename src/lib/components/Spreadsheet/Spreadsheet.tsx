@@ -667,6 +667,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           prevData: {},
           changeType: "add"}]);
         // setFocusState(undefined);
+        setIsFocus(true);
       },
       // create remove row on focusstate location and multiple selected rows
       removeRow: () => {
@@ -707,14 +708,41 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           setCellChangesIndex(cellChangesIndex + rowId.length);
           setRowChanges([...rowChanges.slice(0, cellChangesIndex + 1), ...arrRowChange]);              
           // setFocusState(undefined);
+          setIsFocus(true);
         }
       },
       // get cellchange (already consider undo/redo)
       getCellChanges: () => {
-        if (cellChangesIndex >= 0) {
-          return rowChanges.slice(0, cellChangesIndex + 1);
+        if (cellChangesIndex<0) {
+          return [];
         }
-        return [];
+        let allRowChanges = rowChanges.slice(0, cellChangesIndex + 1);
+        let result = allRowChanges.map((rowChange) => {
+          if (rowChange.changeType === "update") {
+            let tempResult = []
+            for (let i = 0; i < rowChange.data.length; i++) {
+              let columnId = Object.keys(rowChange.data[i])[0]
+              tempResult.push({
+                uuid: rowChange.uuid[i],
+                columnId: columnId,
+                rowId: Array.isArray(rowChange.rowId )? rowChange.rowId[i]: rowChange.rowId,
+                value: getCellData(rowChange.data[i][columnId]),
+                prevValue: getCellData(rowChange.prevData[i][columnId]),
+                changeType: "update"
+              })
+            }
+            return tempResult
+          } else {
+            return {
+              uuid: rowChange.uuid,
+              rowId: rowChange.rowId,
+              value: rowChange.data,
+              prevValue: rowChange.prevData,
+              changeType: rowChange.changeType
+            }
+          }
+        });
+        return result.flat();
       },
       //sort data based on multiple keys
       sortData: (sortKeys: string[]) => {
@@ -801,6 +829,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
             data: newRow,
             prevData: {},
             changeType: "duplicate"}]);
+            setIsFocus(true);
           // setFocusState(undefined);
         }
       },
