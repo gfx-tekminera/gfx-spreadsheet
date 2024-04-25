@@ -411,7 +411,8 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   Make a duplicate of the focused row and insert it below.
 - `ref.current.cancelEdit()`
   Reset the spreadsheet to its original state, but perserve changes state (can redo all change). If using infinite scroll need to set pageRef.current.page = 1 and pageRef.current.hasMore = true
-
+- `ref.current.getRefReactGridState()`
+  get current state of reactgrid component
   
 
 
