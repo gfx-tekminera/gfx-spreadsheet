@@ -251,6 +251,15 @@ function Basic() {
         >
           get state
         </button>
+        <button
+          onClick={async () => {
+            if (ref && ref?.current) {
+              ref.current.clearCellChanges();
+            }
+          }}
+        >
+          Clear Cell Changes
+        </button>
       </div>
       {data && (
         <Spreadsheet

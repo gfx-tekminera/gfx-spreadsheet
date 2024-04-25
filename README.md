@@ -413,6 +413,9 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   Reset the spreadsheet to its original state, but perserve changes state (can redo all change). If using infinite scroll need to set pageRef.current.page = 1 and pageRef.current.hasMore = true
 - `ref.current.getRefReactGridState()`
   get current state of reactgrid component
+- `ref.current.clearCellChanges()`
+  Prevent users from undoing or redoing changes by clearing the cellChanges.
+  
   
 
 

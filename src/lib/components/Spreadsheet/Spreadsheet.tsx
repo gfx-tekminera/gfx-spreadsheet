@@ -865,6 +865,11 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         setCellChanges(filteredCellChanges);
       },
       getRefReactGridState: () => refReactGrid?.current?.state,
+      clearCellChanges: () => {
+        setCellChanges([]);
+        setRowChanges([]);
+        setCellChangesIndex(-1);
+      }
     }),
     [
       columns,
