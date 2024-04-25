@@ -242,6 +242,15 @@ function Basic() {
         >
           Cancel Edit
         </button>
+        <button
+          onClick={async () => {
+            if (ref && ref?.current) {
+              console.log(ref.current.getRefReactGridState());
+            }
+          }}
+        >
+          get state
+        </button>
       </div>
       {data && (
         <Spreadsheet
