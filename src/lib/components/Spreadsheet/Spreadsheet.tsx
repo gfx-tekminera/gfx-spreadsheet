@@ -48,7 +48,6 @@ import { isRangePattern, isColonPattern } from "../../helpers";
 import { getParser, replaceVariable } from "./formulaParser";
 import useClickOutside from "../../hooks/useClickOutside";
 import useOnScreen from "../../hooks/useOnScreen";
-import { set } from "cypress/types/lodash";
 import { v4 as uuid } from 'uuid';
 
 const reorderArray = <T extends object>(
@@ -633,7 +632,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
               .map((key) => [key, ""])
           )
         );
-        newRow.uuid=uuid()
+        newRow.uuid=createNewRowUuid()
         let newData = [...data];
         if (focusState !== undefined) {
           const rowId = focusState.rowId;
@@ -804,7 +803,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
                 .map((key) => [key, data[rowId as number][key]])
             )
           );
-          newRow.uuid=uuid()
+          newRow.uuid=createNewRowUuid()
           let newData = [...data];
           newData.splice(+rowId + 1, 0, newRow);
           newData = newData.map((obj, i) => ({ ...obj, _idx: i }));
@@ -1573,6 +1572,9 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     let rowId = selectedRanges.map((el) => el.rows.map((row)=>row.rowId));
     return rowId.flat(Infinity).sort().reverse() as Number[] ;
   }
+  const createNewRowUuid = () => {
+    return `spreadSheetNewRow-${uuid()}`;
+  }
   const refReactGrid = useRef<ReactGrid>(null)
   return (
     <div
@@ -1599,7 +1601,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
                 }).toString();
               }
             });
-            empty.uuid=uuid()
+            empty.uuid=createNewRowUuid()
             const newState = createCellState(empty);
             const newData: DataRow[] = [...data, empty];
 

@@ -294,6 +294,10 @@ function Basic() {
               earlyCheckin: "checkbox",
               additional: "s_creatable",
             },
+            headersLabel:{
+              name: "Person Name",
+              age: "Person Age",
+            },
             headerIcon: {
               gender: (data) => (
                 <FilterIconComponent
