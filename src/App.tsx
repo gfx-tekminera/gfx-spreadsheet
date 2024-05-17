@@ -260,6 +260,28 @@ function Basic() {
         >
           Clear Cell Changes
         </button>
+        <button
+          onClick={async () => {
+            if (ref && ref?.current) {
+              ref.current.highlightCell([
+                { rowId: 1, columnId: 'name', borderColor: 'red'},
+                { rowId: 2, columnId: 'name', borderColor: 'red'},
+                { rowId: 2, columnId: 'age', borderColor: 'red'}
+              ]);
+            }
+          }}
+        >
+          Highlight Cell
+        </button>
+        <button
+          onClick={async () => {
+            if (ref && ref?.current) {
+              ref.current.clearHighlightCell();
+            }
+          }}
+        >
+          Un-Highlight Cell
+        </button>
       </div>
       {data && (
         <Spreadsheet

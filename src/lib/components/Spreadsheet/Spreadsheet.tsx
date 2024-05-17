@@ -13,6 +13,7 @@ import {
   CellChange,
   CellLocation,
   CellStyle,
+  Highlight 
 } from "@silevis/reactgrid";
 
 import {
@@ -49,6 +50,7 @@ import { getParser, replaceVariable } from "./formulaParser";
 import useClickOutside from "../../hooks/useClickOutside";
 import useOnScreen from "../../hooks/useOnScreen";
 import { v4 as uuid } from 'uuid';
+import { clear } from "console";
 
 const reorderArray = <T extends object>(
   arr: T[],
@@ -272,6 +274,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     });
   };
 
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [data, setData] = useState<DataRow[]>(
     getData(props?.sheetData, props?.sheetOption)
   );
@@ -869,6 +872,12 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         setCellChanges([]);
         setRowChanges([]);
         setCellChangesIndex(-1);
+      },
+      highlightCell: (data:Highlight[]) => {
+        setHighlights(data)
+      },
+      clearHighlightCell: () => {
+        setHighlights([])
       }
     }),
     [
@@ -1695,6 +1704,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // set focusLocation from focusState
         // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
+        highlights={highlights}
         ref={refReactGrid}
       />
       <div ref={infiniteScrollRef} style={{marginBottom:20}}></div>

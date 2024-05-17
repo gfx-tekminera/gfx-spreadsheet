@@ -415,7 +415,10 @@ If reference is provided, spreadsheet state can be accessed with these exposed m
   get current state of reactgrid component
 - `ref.current.clearCellChanges()`
   Prevent users from undoing or redoing changes by clearing the cellChanges.
-  
+- `ref.current.highlightCell(highlightCell:Highlight[])`
+  Highlight a cell based on its rowId, columnId, and an optional borderColor. To further customize the style of the highlighted cell, you can adjust the CSS property of "rg-cell-highlight".
+- `ref.current.clearHighlightCell()`
+  Clear all previously created highlights.
   
 
 
