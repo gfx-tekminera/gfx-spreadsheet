@@ -306,6 +306,30 @@ function Basic() {
                 }
               }
             },
+            headerMerge: [
+              [
+              { text: "#" },
+              { text: "PERSON", colspan: 2 },
+              { text: "" },
+              { text: "GENDER", rowspan: 2 },
+              { text: "TITLE", rowspan: 2 },
+              { text: "BOKING", rowspan: 2 },
+              { text: "CHECKIN", rowspan: 2 },
+              { text: "EARLY CHECKIN", rowspan: 2 },
+              { text: "ADDITIONAL", rowspan: 2 },
+              ],
+              [
+              { text: "#" },
+              { text: "NAME"},
+              { text: "AGE" },
+              { text: "" },
+              { text: "" },
+              { text: "" },
+              { text: "" },
+              { text: "" },
+              { text: "" },
+              ]
+            ],
             includes: COLUMNS,
             columnType: {
               age: "number",

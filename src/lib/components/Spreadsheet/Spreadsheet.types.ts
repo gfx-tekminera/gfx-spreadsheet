@@ -89,6 +89,12 @@ export type SpreadSheetOption = {
   columnType: SpreadSheetColumnOption;
   // icon for spreadsheet header
   headerIcon: HeaderIcon;
+  // 
+  headerMerge : Array<Array<{ 
+    text: string
+    colspan?:number
+    rowspan?:number
+   }>>;
   // list of enum values for DataRow[key]
   valuesMap: Record<keyof DataRow, any[]>;
   // map of function to get label from valuesMap
