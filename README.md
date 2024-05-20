@@ -90,6 +90,13 @@ export type SpreadSheetProps = {
 
     // setting style of tooltip text pop up when hover the header cells
     headerTooltipStyle?: React.CSSProperties
+
+    // to display header with merge column
+    headerMerge?: Array<Array<{ 
+    text: string
+    colspan?:number
+    rowspan?:number
+   }>>;
   };
 };
 ```
