@@ -1712,7 +1712,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         enableColumnSelection
         enableRowSelection
         enableRangeSelection
-        stickyTopRows={1}
+        stickyTopRows={props?.sheetOption?.headerMerge ? props?.sheetOption?.headerMerge.length : 1}
         stickyLeftColumns={1}
         canReorderRows={handleCanReorderRows}
         onCellsChanged={handleChanges}
