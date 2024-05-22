@@ -13,6 +13,7 @@ import {
   CellChange,
   CellLocation,
   CellStyle,
+  Highlight 
 } from "@silevis/reactgrid";
 
 import {
@@ -272,6 +273,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
     });
   };
 
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [data, setData] = useState<DataRow[]>(
     getData(props?.sheetData, props?.sheetOption)
   );
@@ -869,6 +871,12 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         setCellChanges([]);
         setRowChanges([]);
         setCellChangesIndex(-1);
+      },
+      highlightCell: (data:Highlight[]) => {
+        setHighlights(data)
+      },
+      clearHighlightCell: () => {
+        setHighlights([])
       }
     }),
     [
@@ -1126,28 +1134,51 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
           text: headerMap[columnsOrder[_idx]]
             ? headerMap[columnsOrder[_idx]].toString()
             : columnsOrder[_idx].toString(),
-          icon: props?.sheetOption?.headerIcon
+            icon: props?.sheetOption?.headerIcon
             ? props?.sheetOption?.headerIcon[columnsOrder[_idx].toString()] ||
-              (() => {})
+            (() => {})
             : () => {},
-          headerTooltipText: props?.sheetOption?.headerTooltipText
+            headerTooltipText: props?.sheetOption?.headerTooltipText
             ? props?.sheetOption?.headerTooltipText[columnsOrder[_idx].toString()] || ""
             : "",
-          headerTooltipStyle: props?.sheetOption?.headerTooltipStyle || {},
-          style: getHeaderStyle(), // headerStyle
-        })),
-        ...actionColumns.map((col) => ({
-          type: "s_header",
-          text: getRowActions()[col.columnId.toString().split("-")[1]].text,
-          dataKey: getRowActions()[col.columnId.toString().split("-")[1]].text,
-        })),
-      ] as SpreadsheetHeaderCell[];
-    };
+            headerTooltipStyle: props?.sheetOption?.headerTooltipStyle || {},
+            style: getHeaderStyle(), // headerStyle
+          })),
+          ...actionColumns.map((col) => ({
+            type: "s_header",
+            text: getRowActions()[col.columnId.toString().split("-")[1]].text,
+            dataKey: getRowActions()[col.columnId.toString().split("-")[1]].text,
+          })),
+        ] as SpreadsheetHeaderCell[];
+      };
+      const getHeader = () => {
+        if(props?.sheetOption?.headerMerge){
+          const header = props?.sheetOption?.headerMerge.map((item:any,index:number) => {
+            return {
+              rowId: `header${index}`,
+              cells: item.map((val:any) => {
+                return {
+                  type: "header",
+                  text: val.text,
+                  rowspan: val.rowspan || 1,
+                  colspan: val.colspan || 1,
+                  style: getHeaderStyle()
+                }
+              })
+            }
+          })
+          return header
+        }else{
+          return([
+            {
+              rowId: "header",
+              cells: headersRow(columns, dataColumnHeaderMap),
+            }]
+          )
+        }
+      } 
     return [
-      {
-        rowId: "header",
-        cells: headersRow(columns, dataColumnHeaderMap),
-      },
+      ...getHeader() as any,
       ...dataRow.map<SpreadSheetRow>((row, rowIdx) => ({
         rowId: row._idx as Id,
         reorderable: true,
@@ -1566,7 +1597,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
 
   const getSelectedRowIds = (): Number[] => {
     const selectedRanges = refReactGrid.current?.state.selectedRanges;
-    if (!selectedRanges || selectedRanges.length == 0) {
+    if (!selectedRanges || selectedRanges.length === 0) {
       return [];
     }
     let rowId = selectedRanges.map((el) => el.rows.map((row)=>row.rowId));
@@ -1681,7 +1712,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         enableColumnSelection
         enableRowSelection
         enableRangeSelection
-        stickyTopRows={1}
+        stickyTopRows={props?.sheetOption?.headerMerge ? props?.sheetOption?.headerMerge.length : 1}
         stickyLeftColumns={1}
         canReorderRows={handleCanReorderRows}
         onCellsChanged={handleChanges}
@@ -1695,6 +1726,7 @@ const SpreadSheet = forwardRef((props: SpreadSheetProps, ref) => {
         // set focusLocation from focusState
         // focusLocation={focusState}
         onFocusLocationChanging={handleFocusLocationChanging}
+        highlights={highlights}
         ref={refReactGrid}
       />
       <div ref={infiniteScrollRef} style={{marginBottom:20}}></div>
